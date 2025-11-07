@@ -18,7 +18,10 @@
             display: flex;
             align-items: center;
         }
-        
+        .timezone-helper {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
         .auth-container {
             background: white;
             border-radius: 20px;

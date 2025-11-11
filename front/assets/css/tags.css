@@ -1,0 +1,19 @@
+.tag-preview {
+    display: inline-block;
+    background: #4361ee;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    margin: 0.125rem;
+}
+
+.tag-preview .remove-tag {
+    margin-left: 0.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.tag-preview .remove-tag:hover {
+    opacity: 1;
+}

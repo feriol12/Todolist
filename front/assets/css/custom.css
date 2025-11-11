@@ -1,0 +1,14 @@
+#customReminderSection {
+    border-left: 4px solid #4361ee;
+    transition: all 0.3s ease;
+}
+
+#customReminderSection .card-body {
+    padding: 1rem;
+}
+
+.reminder-suggestion {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-style: italic;
+}

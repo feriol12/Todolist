@@ -1,0 +1,57 @@
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        
+        .task-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .task-todo { border-left-color: #dc3545 !important; }
+        .task-inprogress { border-left-color: #ffc107 !important; }
+        .task-done { border-left-color: #198754 !important; }
+        
+        .priority-high { border-left: 4px solid #dc3545; }
+        .priority-medium { border-left: 4px solid #ffc107; }
+        .priority-low { border-left: 4px solid #198754; }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .drag-over {
+            background-color: #f8f9fa;
+            border: 2px dashed #4361ee;
+        }
+
+        /* Style pour les boutons auth */
+        .auth-buttons .btn {
+            margin-left: 0.5rem;
+        }
+
+        .user-welcome {
+            color: #fff;
+            margin-right: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .auth-buttons {
+                margin-top: 1rem;
+            }
+            .user-welcome {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+                text-align: center;
+            }
+        }

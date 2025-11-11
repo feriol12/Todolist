@@ -70,3 +70,6 @@ CREATE TABLE task_notes (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_task_id (task_id)
 );
+
+-- pour la suppression de la colonne
+ALTER TABLE tasks DROP COLUMN is_recurring;

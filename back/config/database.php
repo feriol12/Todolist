@@ -28,10 +28,10 @@ class Database {
             // Optional: Éviter les émoluments numériques
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             
-            echo "✅ Connexion à la base de données réussie!";
+            // echo "✅ Connexion à la base de données réussie!";
 
         } catch(PDOException $exception) {
-            echo "❌ Erreur de connexion: " . $exception->getMessage();
+            // echo "❌ Erreur de connexion: " . $exception->getMessage();
             // En production, logger l'erreur au lieu de l'afficher
             error_log("Database connection failed: " . $exception->getMessage());
         }

@@ -67,6 +67,8 @@ async function handleRegister() {
   const confirmPassword = document.getElementById(
     "registerConfirmPassword"
   ).value;
+  const timezone = document.getElementById('timezone').value;
+
   const btn = document.getElementById("registerBtn");
 
   // 👉 Vérification dans la console
@@ -98,7 +100,7 @@ async function handleRegister() {
   // Ici, vous intégrerez l'appel API réel
 
   try {
-    const response = await fetch("/api/auth.php?action=register", {
+    const response = await fetch("back/api/auth.php?action=register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -113,6 +115,7 @@ async function handleRegister() {
     });
 
     const data = await response.json();
+    console.log(data)
 
     if (data.success) {
       showToast("Compte créé!", "Bienvenue " + firstName + "!", "success");
@@ -125,7 +128,7 @@ async function handleRegister() {
       showToast("Erreur", data.error || "Erreur lors de la création", "error");
     }
   } catch (error) {
-    console.error("Erreur:", error);
+    // console.error("Erreur:", error);
     showToast("Erreur", "Problème de connexion au serveur", "error");
   } finally {
     btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Créer mon compte';

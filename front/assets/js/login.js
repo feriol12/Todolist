@@ -36,10 +36,13 @@ document
     handleRegister();
   });
 
-function handleLogin() {
+async function handleLogin() {
   const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
   const btn = document.getElementById("loginBtn");
+
+   console.log("Email :", email);
+  console.log("Mot de passe : :", password);
 
   // Simulation de chargement
   btn.innerHTML =
@@ -47,16 +50,50 @@ function handleLogin() {
   btn.disabled = true;
 
   // Ici, vous intégrerez l'appel API réel
-  setTimeout(() => {
+
+try {
+  const response = await fetch("back/api/auth.php?action=login",{
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+     email: email,
+     password: password, 
+
+    }),
+  });
+
+     const data = await response.json();
+    console.log(data)
+
+    if (data.success) {
+      setTimeout(() => {
     showToast("Connexion réussie!", "Bienvenue sur TaskMaster!", "success");
     btn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Se connecter';
     btn.disabled = false;
 
     // Redirection vers le dashboard
     setTimeout(() => {
-      window.location.href = "dashboard.html";
+      window.location.href = "front/assets/dashboard.html";
     }, 1500);
   }, 2000);
+      
+    } else {
+      showToast("Erreur", data.error || "Erreur lors de la connexion", "error");
+ 
+    }
+
+} catch (error) {
+   
+  showToast("Erreur", "Problème de connexion au serveur", "error");
+  
+}finally {
+    btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Créer mon compte';
+    btn.disabled = false;
+  }
+
+  
 }
 
 async function handleRegister() {

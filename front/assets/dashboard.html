@@ -339,6 +339,7 @@
                   type="text"
                   class="form-control"
                   id="projectName"
+                  name="name"
                   required
                 />
               </div>
@@ -351,12 +352,13 @@
                   class="form-control"
                   id="projectDescription"
                   rows="3"
+                  name="description"
                 ></textarea>
               </div>
 
               <div class="mb-3">
                 <label for="projectIcon" class="form-label">Icône</label>
-                <select class="form-select" id="projectIcon">
+                <select class="form-select" id="projectIcon" name="icon">
                   <option value="">Aucune icône</option>
                   <option value="fas fa-briefcase">💼 Travail</option>
                   <option value="fas fa-home">🏠 Maison</option>
@@ -376,6 +378,7 @@
                   class="form-control"
                   id="projectColor"
                   value="#4361ee"
+                  name="color"
                 />
               </div>
 
@@ -384,6 +387,7 @@
                   class="form-check-input"
                   type="checkbox"
                   id="projectIsFavorite"
+                  name="is_favorite"
                 />
                 <label class="form-check-label" for="projectIsFavorite">
                   Marquer comme favori
@@ -611,5 +615,6 @@
     <script src="js/custom.js"></script>
     <script src="js/tags.js"></script>
     <script src="js/modal-project.js"></script>
+    <script src="js/project.js"></script>
   </body>
 </html>

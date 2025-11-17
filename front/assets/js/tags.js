@@ -77,4 +77,4 @@ class TagsManager {
 }
 
 // Initialisation globale
-const tagsManager = new TagsManager();
+const tagsManager = new TagsManager();

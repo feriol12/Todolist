@@ -88,7 +88,7 @@ async function loadProjects() {
 }
 
 function updateProjectSelect(projects) {
-  const select = document.getElementById("Project");
+  const select = document.getElementById("project");
   if (!select) {
     console.warn("Element #Project non trouvé");
     return;
@@ -98,8 +98,8 @@ function updateProjectSelect(projects) {
   
   projects.forEach(project => {
     const option = document.createElement('option');
-    option.value = project.uuid;
-    option.textContent = project.name;
+    option.value = project.id;
+    option.textContent = project.name; 
     option.dataset.color = project.color;
     select.appendChild(option);
   });

@@ -19,6 +19,46 @@ class ReminderManager {
         }
     }
 
+// ✅ GARDER ton ReminderManager existant
+    
+    
+    // ✅ AJOUTER cette méthode
+    getReminderValue() {
+        const reminderType = document.getElementById('taskReminder').value;
+        
+        if (reminderType === 'custom') {
+            return this.getCustomReminderValue();
+        } else if (reminderType) {
+            return this.getOffsetReminderValue(parseInt(reminderType));
+        }
+        
+        return null;
+    }
+
+    getCustomReminderValue() {
+        const customDate = document.getElementById('customReminderDate').value;
+        const customTime = document.getElementById('customReminderTime').value;
+        
+        if (!customDate || !customTime) {
+            return null;
+        }
+        
+        return `${customDate} ${customTime}:00`;
+    }
+
+    getOffsetReminderValue(offsetMinutes) {
+        const dueDate = document.getElementById('taskDueDate').value;
+        const dueTime = document.getElementById('taskDueTime').value;
+        
+        if (!dueDate) return null;
+        
+        // Logique de calcul du rappel relatif
+        // À implémenter selon tes besoins
+        return `${dueDate} ${dueTime || '23:59:00'}`;
+    }
+
+
+
     handleReminderChange(selectedValue) {
         const customSection = document.getElementById('customReminderSection');
         
@@ -48,6 +88,7 @@ class ReminderManager {
         }
     }
 }
+
 
 // Initialiser le gestionnaire de rappel
 document.addEventListener('DOMContentLoaded', function() {

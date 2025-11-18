@@ -46,7 +46,7 @@ CREATE TABLE tasks (
     estimated_duration INT NULL,
     actual_duration INT NULL,
     sort_order INT DEFAULT 0,
-    -- is_recurring BOOLEAN DEFAULT FALSE,                       
+    is_recurring BOOLEAN DEFAULT FALSE,                       
     tags JSON NULL,
     completed_at DATETIME NULL,
     is_active BOOLEAN DEFAULT TRUE,

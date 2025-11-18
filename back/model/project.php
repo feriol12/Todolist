@@ -71,23 +71,111 @@ class Project
     }
 
     // ✅ NOUVELLE MÉTHODE POUR RÉCUPÉRER LES PROJETS D'UN UTILISATEUR
+    // public function getUserProjects($user_id)
+    // {
+    //     try {
+    //         $query = "SELECT id, uuid, name, description, color, icon, is_favorite, created_at 
+    //                   FROM " . $this->table_name . " 
+    //                   WHERE user_id = :user_id AND is_active = 1 
+    //                   ORDER BY is_favorite DESC, sort_order ASC, created_at DESC";
+
+    //         $stmt = $this->conn->prepare($query);
+    //         $stmt->bindParam(":user_id", $user_id);
+    //         $stmt->execute();
+
+    //         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    //     } catch (PDOException $e) {
+    //         throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
+    //     }
+    // }
+
     public function getUserProjects($user_id)
-    {
-        try {
-            $query = "SELECT id, uuid, name, description, color, icon, is_favorite, created_at 
-                      FROM " . $this->table_name . " 
-                      WHERE user_id = :user_id AND is_active = 1 
-                      ORDER BY is_favorite DESC, sort_order ASC, created_at DESC";
+{
+    try {
+        $query = "SELECT 
+                    p.id,
+                    p.uuid,
+                    p.name,
+                    p.description,
+                    p.color,
+                    p.icon,
+                    p.is_favorite,
+                    p.created_at,
 
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $user_id);
-            $stmt->execute();
+                    -- Nombre total de tâches
+                    COUNT(t.id) AS task_count,
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
+                    -- Nombre de tâches terminées
+                    SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS total_done,
+
+                    -- Nombre de tâches en cours
+                    SUM(CASE WHEN t.status = 'in_progress' THEN 1 ELSE 0 END) AS total_in_progress,
+
+                    -- Nombre de tâches à faire
+                    SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS total_todo
+                    
+                FROM projects p
+                LEFT JOIN tasks t ON t.project_id = p.id AND t.is_active = 1
+                WHERE p.user_id = :user_id AND p.is_active = 1
+                GROUP BY p.id
+                ORDER BY p.is_favorite DESC, p.sort_order ASC, p.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Calculer ici le pourcentage d'avancement pour chaque projet
+        foreach ($projects as &$p) {
+            if ($p['task_count'] > 0) {
+                $p['progress_percent'] = round(($p['total_done'] / $p['task_count']) * 100);
+            } else {
+                $p['progress_percent'] = 0;
+            }
         }
+
+        return $projects;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
     }
+}
+
+
+
+    // ✅ AJOUTE CES MÉTHODES DANS TA CLASSE PROJECT
+
+public function deleteProject($project_id) {
+    try {
+        // Soft delete (recommandé)
+        $query = "UPDATE " . $this->table_name . " 
+                 SET is_active = 0 
+                 WHERE id = :project_id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":project_id", $project_id);
+        
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        throw new Exception("Erreur suppression projet: " . $e->getMessage());
+    }
+}
+
+public function toggleFavorite($project_id) {
+    try {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET is_favorite = NOT is_favorite 
+                 WHERE id = :project_id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":project_id", $project_id);
+        
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        throw new Exception("Erreur mise à jour favori: " . $e->getMessage());
+    }
+}
 
 
 

@@ -1,234 +1,301 @@
 <!DOCTYPE html>
 <html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskMaster - Gestionnaire de Tâches</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskMaster - Gestionnaire de Tâches</title>
-
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/dash.css" />
-  <link rel="stylesheet" href="css/custom.css" />
-  <link rel="stylesheet" href="css/tags.css" />
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/dash.css" />
+    <link rel="stylesheet" href="css/custom.css" />
+    <link rel="stylesheet" href="css/tags.css" />
   <link rel="stylesheet" href="css/table.css" />
-</head>
+  </head>
 
-<body>
-  <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-      <a class="navbar-brand" href="#">
-        <i class="fas fa-tasks me-2"></i>
-        TaskMaster
-      </a>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-tasks me-2"></i>
+          TaskMaster
+        </a>
 
-      <!-- Bouton toggle pour mobile -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+        <!-- Bouton toggle pour mobile -->
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarContent"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-      <!-- Contenu de la navbar -->
-      <div class="collapse navbar-collapse" id="navbarContent">
-        <!-- Stats rapides -->
-        <div class="navbar-nav me-auto">
-          <div class="d-flex text-light align-items-center">
-            <small class="me-3">
-              <i class="fas fa-list-check me-1"></i>
-              <span id="total-tasks">0</span> tâches
-            </small>
-            <small>
-              <i class="fas fa-clock me-1"></i>
-              <span id="pending-tasks">0</span> en attente
-            </small>
+        <!-- Contenu de la navbar -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+          <!-- Stats rapides -->
+          <div class="navbar-nav me-auto">
+            <div class="d-flex text-light align-items-center">
+              <small class="me-3">
+                <i class="fas fa-list-check me-1"></i>
+                <span id="total-tasks">0</span> tâches
+              </small>
+              <small>
+                <i class="fas fa-clock me-1"></i>
+                <span id="pending-tasks">0</span> en attente
+              </small>
+            </div>
           </div>
-        </div>
 
-        <!-- Section utilisateur -->
-        <div class="navbar-nav ms-auto">
-          <!-- État non connecté -->
-          <div id="auth-buttons" class="auth-buttons d-flex align-items-center">
-            <!-- 👇 INSÈRE ICI le user-welcome -->
-            <span class="user-welcome me-3">
-              <i class="fas fa-user me-1"></i>
-              <span id="user-name">John Doe</span>
-                       </span>
-            <!-- ✅ BON - pour des actions dans la page -->
-            <button class="btn btn-outline-light btn-sm" id="logout-btn">
-              <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
-            </button>
-            <!-- <a href="../../index.html" class="btn btn-primary btn-sm">
+          <!-- Section utilisateur -->
+          <div class="navbar-nav ms-auto">
+            <!-- État non connecté -->
+            <div
+              id="auth-buttons"
+              class="auth-buttons d-flex align-items-center"
+            >
+              <!-- 👇 INSÈRE ICI le user-welcome -->
+              <span class="user-welcome me-3">
+                <i class="fas fa-user me-1"></i>
+                <span id="user-name">John Doe</span>
+              </span>
+              <!-- ✅ BON - pour des actions dans la page -->
+              <button class="btn btn-outline-light btn-sm" id="logout-btn">
+                <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+              </button>
+              <!-- <a href="../../index.html" class="btn btn-primary btn-sm">
                 <i class="fas fa-user-plus me-1"></i>Inscription
               </a> -->
-          </div>
-
-          <!-- État connecté -->
-          <div id="user-menu" class="auth-buttons d-flex align-items-center" style="display: none !important">
-            <span class="user-welcome">
-              <i class="fas fa-user me-1"></i>
-              <span id="user-name">Utilisateur</span>
-            </span>
-            <div class="dropdown">
-              <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-cog me-1"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" href="profile.html">
-                    <i class="fas fa-user me-2"></i>Mon profil
-                  </a>
-                </li>
-                <li>
-                  <a class="dropdown-item" href="settings.html">
-                    <i class="fas fa-cog me-2"></i>Paramètres
-                  </a>
-                </li>
-                <li>
-                  <hr class="dropdown-divider" />
-                </li>
-                <li>
-                  <button class="dropdown-item text-danger" id="logout-btn">
-                    <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container-fluid py-4">
-    <div class="row">
-      <!-- Sidebar - Filtres -->
-      <div class="col-lg-3 col-md-4 mb-4">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h5>
-          </div>
-          <div class="card-body">
-            <!-- Formulaire nouveau projet -->
-
-            <button class="btn btn-danger w-100 mb-3" data-bs-toggle="modal" data-bs-target="#projectModal">
-              <i class="fas fa-plus me-2"></i>Nouveau projet
-            </button>
-
-            <!-- Formulaire nouvelle tâche -->
-            <div class="mb-4">
-              <button class="btn btn-success w-100 mb-3" data-bs-toggle="modal" data-bs-target="#taskModal">
-                <i class="fas fa-plus me-2"></i>Nouvelle Tâche
-              </button>
             </div>
 
-            <!-- Filtres par statut -->
-            <div class="mb-3">
-              <h6>Statut</h6>
-              <div class="form-check">
-                <input class="form-check-input filter-status" type="radio" name="statusFilter" value="all" checked />
-                <label class="form-check-label">Toutes</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input filter-status" type="radio" name="statusFilter" value="todo" />
-                <label class="form-check-label">
-                  <span class="badge bg-danger">À faire</span>
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input filter-status" type="radio" name="statusFilter" value="in_progress" />
-                <label class="form-check-label">
-                  <span class="badge bg-warning">En cours</span>
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input filter-status" type="radio" name="statusFilter" value="done" />
-                <label class="form-check-label">
-                  <span class="badge bg-success">Terminées</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Filtres par priorité -->
-            <div class="mb-3">
-              <h6>Priorité</h6>
-              <div class="form-check">
-                <input class="form-check-input filter-priority" type="checkbox" value="high" />
-                <label class="form-check-label">
-                  <span class="badge bg-danger">Haute</span>
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input filter-priority" type="checkbox" value="medium" />
-                <label class="form-check-label">
-                  <span class="badge bg-warning">Moyenne</span>
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input filter-priority" type="checkbox" value="low" />
-                <label class="form-check-label">
-                  <span class="badge bg-success">Basse</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Recherche -->
-            <div class="mb-3">
-              <h6>Recherche</h6>
-              <input type="text" class="form-control" id="search-input" placeholder="Rechercher..." />
-            </div>
-          </div>
-        </div>
-
-        <!-- Statistiques -->
-        <div class="card mt-4">
-          <div class="card-header bg-info text-white">
-            <h6 class="mb-0">
-              <i class="fas fa-chart-bar me-2"></i>Statistiques
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="row text-center">
-              <div class="col-4">
-                <h5 class="text-primary" id="stats-todo">0</h5>
-                <small>À faire</small>
-              </div>
-              <div class="col-4">
-                <h5 class="text-warning" id="stats-progress">0</h5>
-                <small>En cours</small>
-              </div>
-              <div class="col-4">
-                <h5 class="text-success" id="stats-done">0</h5>
-                <small>Terminées</small>
+            <!-- État connecté -->
+            <div
+              id="user-menu"
+              class="auth-buttons d-flex align-items-center"
+              style="display: none !important"
+            >
+              <span class="user-welcome">
+                <i class="fas fa-user me-1"></i>
+                <span id="user-name">Utilisateur</span>
+              </span>
+              <div class="dropdown">
+                <button
+                  class="btn btn-outline-light btn-sm dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                >
+                  <i class="fas fa-cog me-1"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" href="profile.html">
+                      <i class="fas fa-user me-2"></i>Mon profil
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="settings.html">
+                      <i class="fas fa-cog me-2"></i>Paramètres
+                    </a>
+                  </li>
+                  <li>
+                    <hr class="dropdown-divider" />
+                  </li>
+                  <li>
+                    <button class="dropdown-item text-danger" id="logout-btn">
+                      <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </nav>
 
-      <!-- Zone principale - Tâches -->
-      <div class="col-lg-9 col-md-8">
-        <!-- En-tête -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h3>Mes Tâches</h3>
-          <div class="btn-group">
-            <button class="btn btn-outline-secondary" id="view-grid">
-              <i class="fas fa-grid"></i>
-            </button>
-            <button class="btn btn-outline-primary active" id="view-list">
-              <i class="fas fa-list"></i>
-            </button>
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- Sidebar - Filtres -->
+        <div class="col-lg-3 col-md-4 mb-4">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h5>
+            </div>
+            <div class="card-body">
+              <!-- Formulaire nouveau projet -->
+
+              <button
+                class="btn btn-danger w-100 mb-3"
+                data-bs-toggle="modal"
+                data-bs-target="#projectModal"
+              >
+                <i class="fas fa-plus me-2"></i>Nouveau projet
+              </button>
+
+              <!-- Formulaire nouvelle tâche -->
+              <div class="mb-4">
+                <button
+                  class="btn btn-success w-100 mb-3"
+                  data-bs-toggle="modal"
+                  data-bs-target="#taskModal"
+                >
+                  <i class="fas fa-plus me-2"></i>Nouvelle Tâche
+                </button>
+              </div>
+
+              <!-- Filtres par statut -->
+              <div class="mb-3">
+                <h6>Statut</h6>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-status"
+                    type="radio"
+                    name="statusFilter"
+                    value="all"
+                    checked
+                  />
+                  <label class="form-check-label">Toutes</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-status"
+                    type="radio"
+                    name="statusFilter"
+                    value="todo"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-danger">À faire</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-status"
+                    type="radio"
+                    name="statusFilter"
+                    value="in_progress"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-warning">En cours</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-status"
+                    type="radio"
+                    name="statusFilter"
+                    value="done"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-success">Terminées</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Filtres par priorité -->
+              <div class="mb-3">
+                <h6>Priorité</h6>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-priority"
+                    type="checkbox"
+                    value="high"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-danger">Haute</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-priority"
+                    type="checkbox"
+                    value="medium"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-warning">Moyenne</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input filter-priority"
+                    type="checkbox"
+                    value="low"
+                  />
+                  <label class="form-check-label">
+                    <span class="badge bg-success">Basse</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Recherche -->
+              <div class="mb-3">
+                <h6>Recherche</h6>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="search-input"
+                  placeholder="Rechercher..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistiques -->
+          <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+              <h6 class="mb-0">
+                <i class="fas fa-chart-bar me-2"></i>Statistiques
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-4">
+                  <h5 class="text-primary" id="stats-todo">0</h5>
+                  <small>À faire</small>
+                </div>
+                <div class="col-4">
+                  <h5 class="text-warning" id="stats-progress">0</h5>
+                  <small>En cours</small>
+                </div>
+                <div class="col-4">
+                  <h5 class="text-success" id="stats-done">0</h5>
+                  <small>Terminées</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Loading -->
-        <div id="loading" class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Chargement...</span>
+        <!-- Zone principale - Tâches -->
+        <div class="col-lg-9 col-md-8">
+          <!-- En-tête -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Mes Tâches</h3>
+            <div class="btn-group">
+              <button class="btn btn-outline-secondary" id="view-grid">
+                <i class="fas fa-grid"></i>
+              </button>
+              <button class="btn btn-outline-primary active" id="view-list">
+                <i class="fas fa-list"></i>
+              </button>
+            </div>
           </div>
-          <p class="mt-2">Chargement des tâches...</p>
-        </div>
+
+          <!-- Loading -->
+          <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Chargement des tâches...</p>
+          </div>
 
         <!-- Grille des tâches -->
         <div id="tasks-container" class="row" style="display: none">
@@ -285,93 +352,130 @@
 </div>
 
 
-        <!-- Message vide -->
-        <div id="empty-state" class="text-center py-5" style="display: none">
-          <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-          <h4 class="text-muted">Aucune tâche trouvée</h4>
-          <p class="text-muted">Commencez par créer votre première tâche !</p>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
-            <i class="fas fa-plus me-2"></i>Créer une tâche
-          </button>
+          <!-- Message vide -->
+          <div id="empty-state" class="text-center py-5" style="display: none">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Aucune tâche trouvée</h4>
+            <p class="text-muted">Commencez par créer votre première tâche !</p>
+            <button
+              class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#taskModal"
+            >
+              <i class="fas fa-plus me-2"></i>Créer une tâche
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal Création Projet -->
-  <div class="modal fade" id="projectModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="projectModalTitle">Nouveau Projet</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="projectForm">
-            <input type="hidden" id="projectId" />
+    <!-- Modal Création Projet -->
+    <div class="modal fade" id="projectModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="projectModalTitle">Nouveau Projet</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="projectForm">
+              <input type="hidden" id="projectId" />
 
-            <div class="mb-3">
-              <label for="projectName" class="form-label">Nom du projet *</label>
-              <input type="text" class="form-control" id="projectName" required />
-            </div>
+              <div class="mb-3">
+                <label for="projectName" class="form-label"
+                  >Nom du projet *</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="projectName"
+                  required
+                />
+              </div>
 
-            <div class="mb-3">
-              <label for="projectDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="projectDescription" rows="3"></textarea>
-            </div>
+              <div class="mb-3">
+                <label for="projectDescription" class="form-label"
+                  >Description</label
+                >
+                <textarea
+                  class="form-control"
+                  id="projectDescription"
+                  rows="3"
+                ></textarea>
+              </div>
 
-            <div class="mb-3">
-              <label for="projectIcon" class="form-label">Icône</label>
-              <select class="form-select" id="projectIcon" name="icon">
-                <option value="">Aucune icône</option>
-                <option value="fas fa-briefcase">💼 Travail</option>
-                <option value="fas fa-home">🏠 Maison</option>
-                <option value="fas fa-heart">❤ Santé</option>
-                <option value="fas fa-graduation-cap">🎓 Études</option>
-                <option value="fas fa-shopping-cart">🛒 Courses</option>
-                <option value="fas fa-dumbbell">💪 Sport</option>
-                <option value="fas fa-plane">✈ Voyage</option>
-                <option value="fas fa-utensils">🍴 Repas</option>
-              </select>
-            </div>
+              <div class="mb-3">
+                <label for="projectIcon" class="form-label">Icône</label>
+                <select class="form-select" id="projectIcon" name="icon">
+                  <option value="">Aucune icône</option>
+                  <option value="fas fa-briefcase">💼 Travail</option>
+                  <option value="fas fa-home">🏠 Maison</option>
+                  <option value="fas fa-heart">❤ Santé</option>
+                  <option value="fas fa-graduation-cap">🎓 Études</option>
+                  <option value="fas fa-shopping-cart">🛒 Courses</option>
+                  <option value="fas fa-dumbbell">💪 Sport</option>
+                  <option value="fas fa-plane">✈ Voyage</option>
+                  <option value="fas fa-utensils">🍴 Repas</option>
+                </select>
+              </div>
 
-            <div class="mb-3">
-              <label for="projectColor" class="form-label">Couleur</label>
-              <input type="color" class="form-control" id="projectColor" value="#4361ee" />
-            </div>
+              <div class="mb-3">
+                <label for="projectColor" class="form-label">Couleur</label>
+                <input
+                  type="color"
+                  class="form-control"
+                  id="projectColor"
+                  value="#4361ee"
+                />
+              </div>
 
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="projectIsFavorite" />
-              <label class="form-check-label" for="projectIsFavorite">
-                Marquer comme favori
-              </label>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Annuler
-          </button>
-          <button type="button" class="btn btn-primary" id="saveProject">
-            <i class="fas fa-save me-2"></i>Créer le projet
-          </button>
+              <div class="form-check mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="projectIsFavorite"
+                />
+                <label class="form-check-label" for="projectIsFavorite">
+                  Marquer comme favori
+                </label>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Annuler
+            </button>
+            <button type="button" class="btn btn-primary" id="saveProject">
+              <i class="fas fa-save me-2"></i>Créer le projet
+            </button>
+          </div>
         </div>
       </div>
-         
     </div>
-  </div>
 
-  <!-- Modal Création/Édition Tâche -->
-  <div class="modal fade" id="taskModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalTitle">Nouvelle Tâche</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="taskForm">
-            <input type="hidden" id="taskId" />
+    <!-- Modal Création/Édition Tâche -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Nouvelle Tâche</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="taskForm">
+              <input type="hidden" id="taskId" />
 
             <div class="mb-3">
               <label for="Project" class="form-label">Choisisez votre projet *</label>
@@ -381,136 +485,189 @@
               </select>
             </div>
 
-            <div class="mb-3">
-              <label for="taskTitle" class="form-label">Titre *</label>
-              <input type="text" class="form-control" id="taskTitle" required />
-            </div>
-
-            <div class="mb-3">
-              <label for="taskDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="taskDescription" rows="3"></textarea>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="taskStatus" class="form-label">Statut</label>
-                <select class="form-select" id="taskStatus">
-                  <option value="todo">À faire</option>
-                  <option value="in_progress">En cours</option>
-                  <option value="done">Terminée</option>
-                </select>
+              <div class="mb-3">
+                <label for="taskTitle" class="form-label">Titre *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="taskTitle"
+                  required
+                />
               </div>
 
-              <div class="col-md-6 mb-3">
-                <label for="taskPriority" class="form-label">Priorité</label>
-                <select class="form-select" id="taskPriority">
-                  <option value="low">Basse</option>
-                  <option value="medium" selected>Moyenne</option>
-                  <option value="high">Haute</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="taskDueDate" class="form-label">Date d'échéance</label>
-                <input type="date" class="form-control" id="taskDueDate" />
+              <div class="mb-3">
+                <label for="taskDescription" class="form-label"
+                  >Description</label
+                >
+                <textarea
+                  class="form-control"
+                  id="taskDescription"
+                  rows="3"
+                ></textarea>
               </div>
 
-              <div class="col-md-6 mb-3">
-                <label for="taskDueTime" class="form-label">Heure d'échéance</label>
-                <input type="time" class="form-control" id="taskDueTime" />
-              </div>
-            </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="taskStatus" class="form-label">Statut</label>
+                  <select class="form-select" id="taskStatus">
+                    <option value="todo">À faire</option>
+                    <option value="in_progress">En cours</option>
+                    <option value="done">Terminée</option>
+                  </select>
+                </div>
 
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="taskReminder" class="form-label">Date rapelle</label>
-                <select class="form-select" id="taskReminder">
-                  <option value=""></option>
-                  <option value="30">30 minutes avant</option>
-                  <option value="60">1 heure avant</option>
-                  <option value="1440">1 jour avant</option>
-                  <option value="2880">2 jours avant</option>
-                  <option value="custom">heure précise...</option>
-                </select>
-
-                <!-- Section personnalisée (cachée par défaut) -->
-                <div id="customReminderSection" class="card mt-2" style="display: none">
-                  <div class="card-body">
-                    <h6 class="card-title">Rappel personnalisé</h6>
-
-                    <div class="row">
-                      <div class="col-md-6 mb-3">
-                        <label for="customReminderDate" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="customReminderDate" />
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label for="customReminderTime" class="form-label">Heure</label>
-                        <input type="time" class="form-control" id="customReminderTime" />
-                      </div>
-                    </div>
-
-                    <div class="form-text">
-                      <i class="fas fa-info-circle me-1"></i>
-                      Le rappel sera déclenché à cette date et heure précise.
-                    </div>
-                  </div>
+                <div class="col-md-6 mb-3">
+                  <label for="taskPriority" class="form-label">Priorité</label>
+                  <select class="form-select" id="taskPriority">
+                    <option value="low">Basse</option>
+                    <option value="medium" selected>Moyenne</option>
+                    <option value="high">Haute</option>
+                  </select>
                 </div>
               </div>
 
-              <div class="col-md-6 mb-3">
-                <label for="taskDureEstimation" class="form-label">Duré d'estimation</label>
-                <input type="datetime" class="form-control" id="taskDureEstimation" />
-              </div>
-            </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="taskDueDate" class="form-label"
+                    >Date d'échéance</label
+                  >
+                  <input type="date" class="form-control" id="taskDueDate" />
+                </div>
 
-            <div class="mb-3">
-              <label for="taskTags" class="form-label">
-                <i class="fas fa-tags me-1"></i>Tags
-              </label>
-              <input type="text" class="form-control" id="taskTags" placeholder="Ex: urgent, important, réunion" />
-              <div class="form-text">
-                Séparez les tags par des virgules. Maximum 5 tags.
+                <div class="col-md-6 mb-3">
+                  <label for="taskDueTime" class="form-label"
+                    >Heure d'échéance</label
+                  >
+                  <input type="time" class="form-control" id="taskDueTime" />
+                </div>
               </div>
 
-              <!-- Aperçu des tags -->
-              <div id="tagsPreview" class="mt-2"></div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Annuler
-              </button>
-              <button type="submit" class="btn btn-primary" id="saveTask">
-                <i class="fas fa-save me-2"></i>Enregistrer
-              </button>
-            </div>
-          </form>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="taskReminder" class="form-label"
+                    >Date rapelle</label
+                  >
+                  <select class="form-select" id="taskReminder">
+                    <option value=""></option>
+                    <option value="30">30 minutes avant</option>
+                    <option value="60">1 heure avant</option>
+                    <option value="1440">1 jour avant</option>
+                    <option value="2880">2 jours avant</option>
+                    <option value="custom">heure précise...</option>
+                  </select>
+
+                  <!-- Section personnalisée (cachée par défaut) -->
+                  <div
+                    id="customReminderSection"
+                    class="card mt-2"
+                    style="display: none"
+                  >
+                    <div class="card-body">
+                      <h6 class="card-title">Rappel personnalisé</h6>
+
+                      <div class="row">
+                        <div class="col-md-6 mb-3">
+                          <label for="customReminderDate" class="form-label"
+                            >Date</label
+                          >
+                          <input
+                            type="date"
+                            class="form-control"
+                            id="customReminderDate"
+                          />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label for="customReminderTime" class="form-label"
+                            >Heure</label
+                          >
+                          <input
+                            type="time"
+                            class="form-control"
+                            id="customReminderTime"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Le rappel sera déclenché à cette date et heure précise.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="taskDureEstimation" class="form-label"
+                    >Duré d'estimation</label
+                  >
+                  <input
+                    type="datetime"
+                    class="form-control"
+                    id="taskDureEstimation"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="taskTags" class="form-label">
+                  <i class="fas fa-tags me-1"></i>Tags
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="taskTags"
+                  placeholder="Ex: urgent, important, réunion"
+                />
+                <div class="form-text">
+                  Séparez les tags par des virgules. Maximum 5 tags.
+                </div>
+
+                <!-- Aperçu des tags -->
+                <div id="tagsPreview" class="mt-2"></div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary" id="saveTask">
+                  <i class="fas fa-save me-2"></i>Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Toast pour notifications -->
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="liveToast" class="toast" role="alert">
-      <div class="toast-header">
-        <strong class="me-auto" id="toastTitle">Notification</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    <!-- Toast pour notifications -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div id="liveToast" class="toast" role="alert">
+        <div class="toast-header">
+          <strong class="me-auto" id="toastTitle">Notification</strong>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+        <div class="toast-body" id="toastMessage">Message de notification</div>
       </div>
-      <div class="toast-body" id="toastMessage">Message de notification</div>
     </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script src="js/dash.js"></script>
-  <script src="js/custom.js"></script>
-  <script src="js/tags.js"></script>
-  <!-- <script src="js/modal-project.js"></script> -->
-  <script src="js/task.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/dash.js"></script>
+    <script src="js/custom.js"></script>
+    <script src="js/tags.js"></script>
+    <!-- <script src="js/modal-project.js"></script> -->
+    <script src="js/task.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script src="js/project.js"></script>
-</body>
-
+    <script src="js/navbar-manager.js"></script>
+    <script src="js/stats-manager.js"></script>
+  </body>
 </html>

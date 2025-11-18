@@ -29,11 +29,15 @@ try {
         case 'create':
             handleProjectCreate();
             break;
-            
+
         case 'list':
             handleProjectList();
             break;
-            
+
+        case 'stats':
+            handleProjectStats();
+            break;
+
         default:
             http_response_code(400);
             echo json_encode([
@@ -49,7 +53,8 @@ try {
     ]);
 }
 
-function handleProjectCreate() {
+function handleProjectCreate()
+{
     // ✅ VÉRIFIER SI L'UTILISATEUR EST CONNECTÉ
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
@@ -62,7 +67,7 @@ function handleProjectCreate() {
 
     // Récupérer les données JSON
     $input = json_decode(file_get_contents("php://input"), true);
-    
+
     if (!$input) {
         http_response_code(400);
         echo json_encode([
@@ -83,7 +88,7 @@ function handleProjectCreate() {
     }
 
     $project = new Project();
-    
+
     try {
         // ✅ UTILISATION DE $_SESSION['user_id'] ICI
         if ($project->createProject(
@@ -124,7 +129,8 @@ function handleProjectCreate() {
     }
 }
 
-function handleProjectList() {
+function handleProjectList()
+{
     // ✅ VÉRIFIER LA SESSION ICI AUSSI
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
@@ -136,13 +142,39 @@ function handleProjectList() {
     }
 
     $project = new Project();
-    
+
     try {
         $projects = $project->getUserProjects($_SESSION['user_id']);
-        
+
         echo json_encode([
             'success' => true,
             'projects' => $projects
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+
+function handleProjectStats() {
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
+        return;
+    }
+
+    $project = new Project();
+    
+    try {
+        $stats = $project->getProjectsStats($_SESSION['user_id']);
+        
+        echo json_encode([
+            'success' => true,
+            'stats' => $stats
         ]);
     } catch (Exception $e) {
         http_response_code(500);

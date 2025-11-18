@@ -1,3 +1,11 @@
+// Dans ton app.js principal
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le gestionnaire de projets
+    window.projectsManager = new ProjectsManager();
+});
+
+
+
 // Gestion des formulaires
 document.getElementById("taskForm").addEventListener("submit", function (e) {
   e.preventDefault();

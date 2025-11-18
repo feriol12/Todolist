@@ -53,6 +53,11 @@ async function handleProject() {
         
         document.getElementById("projectForm")?.reset();
         loadProjects(); // Recharger la liste
+        
+        // 🔥 AJOUT: Rafraîchir les stats du dernier projet
+        if (window.StatsManager) {
+          StatsManager.refreshStats();
+        }
       }, 1500);
     } else {
       showToast("Erreur", data.error || "Erreur lors de la création", "error");

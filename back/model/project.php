@@ -60,7 +60,7 @@ class Project
                 $this->color = $color;
                 $this->icon = $icon;
                 $this->is_favorite = $is_favorite;
-                
+
                 return true;
             }
 
@@ -86,6 +86,44 @@ class Project
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
+        }
+    }
+
+
+
+    // MODIFIER la méthode getProjectsStats dans project.php
+    public function getProjectsStats($user_id)
+    {
+        try {
+            $query = "
+            SELECT 
+                p.id,
+                p.name,
+                p.color,
+                p.icon,
+                p.created_at,
+                COUNT(t.id) as total_tasks,
+                SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) as todo_tasks,
+                SUM(CASE WHEN t.status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_tasks,
+                SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) as done_tasks
+            FROM " . $this->table_name . " p
+            LEFT JOIN tasks t ON p.id = t.project_id AND t.is_active = TRUE
+            WHERE p.user_id = :user_id AND p.is_active = TRUE
+            GROUP BY p.id, p.name, p.color, p.icon, p.created_at
+            ORDER BY p.created_at DESC, p.id DESC
+            LIMIT 1
+        ";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Retourner le dernier projet ou un tableau vide
+            return $result;
+        } catch (PDOException $e) {
+            throw new Exception("Erreur récupération stats dernier projet: " . $e->getMessage());
         }
     }
 

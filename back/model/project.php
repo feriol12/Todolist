@@ -276,6 +276,62 @@ class Project
         }
     }
 
+
+    // AJOUTER dans la classe Project
+    public function getById($project_id, $user_id)
+    {
+        try {
+            $query = "SELECT id, name, description, color, icon, is_favorite 
+                  FROM " . $this->table_name . " 
+                  WHERE id = :id AND user_id = :user_id AND is_active = TRUE";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $project_id);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Erreur récupération projet: " . $e->getMessage());
+        }
+    }
+
+    public function updateProject($project_id, $user_id, $name, $description, $color, $icon, $is_favorite)
+    {
+        try {
+            // Vérifier que le projet appartient à l'utilisateur
+            $checkQuery = "SELECT id FROM " . $this->table_name . " 
+                      WHERE id = :id AND user_id = :user_id AND is_active = TRUE";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            $checkStmt->bindParam(':id', $project_id);
+            $checkStmt->bindParam(':user_id', $user_id);
+            $checkStmt->execute();
+
+            if ($checkStmt->rowCount() === 0) {
+                throw new Exception("Projet non trouvé ou non autorisé");
+            }
+
+            // Mise à jour
+            $query = "UPDATE " . $this->table_name . " 
+                 SET name = :name, description = :description, color = :color, 
+                     icon = :icon, is_favorite = :is_favorite, updated_at = NOW()
+                 WHERE id = :id AND user_id = :user_id";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $project_id);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->bindParam(':name', htmlspecialchars(strip_tags($name)));
+            $stmt->bindParam(':description', htmlspecialchars(strip_tags($description)));
+            $stmt->bindParam(':color', htmlspecialchars(strip_tags($color)));
+            $stmt->bindParam(':icon', $icon);
+            $stmt->bindParam(':is_favorite', $is_favorite, PDO::PARAM_BOOL);
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Erreur modification projet: " . $e->getMessage());
+        }
+    }
+
     // Générer UUID
     private function generateUUID()
     {

@@ -42,6 +42,13 @@ try {
             handleProjectDelete();
             break;
 
+        case 'get':
+            handleProjectGet();
+            break;
+        case 'update':
+            handleProjectUpdate();
+            break;
+
         default:
             http_response_code(400);
             echo json_encode([
@@ -190,9 +197,10 @@ function handleProjectStats()
     }
 }
 
-function handleProjectDelete() {
+function handleProjectDelete()
+{
     session_start();
-    
+
     // Vérifier si l'utilisateur est connecté
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
@@ -203,7 +211,7 @@ function handleProjectDelete() {
     // Récupérer les données JSON
     $input = json_decode(file_get_contents("php://input"), true);
     $project_id = $input['project_id'] ?? null;
-    
+
     // Validation
     if (!$project_id) {
         http_response_code(400);
@@ -212,11 +220,11 @@ function handleProjectDelete() {
     }
 
     $project = new Project();
-    
+
     try {
         // Suppression logique du projet et des tâches
         $result = $project->softDelete($project_id, $_SESSION['user_id']);
-        
+
         if ($result['success']) {
             echo json_encode([
                 'success' => true,
@@ -227,7 +235,100 @@ function handleProjectDelete() {
                 ]
             ]);
         }
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+
+function handleProjectGet() {
+    session_start();
+    
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
+        return;
+    }
+
+    $project_id = $_GET['id'] ?? null;
+    
+    if (!$project_id) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'ID projet manquant']);
+        return;
+    }
+
+    $project = new Project();
+    
+    try {
+        $projectData = $project->getById($project_id, $_SESSION['user_id']);
         
+        if ($projectData) {
+            echo json_encode([
+                'success' => true,
+                'project' => $projectData
+            ]);
+        } else {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Projet non trouvé'
+            ]);
+        }
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+function handleProjectUpdate() {
+    session_start();
+    
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
+        return;
+    }
+
+    $input = json_decode(file_get_contents("php://input"), true);
+    $project_id = $input['project_id'] ?? null;
+    
+    if (!$project_id) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'ID projet manquant']);
+        return;
+    }
+
+    $project = new Project();
+    
+    try {
+        if ($project->updateProject(
+            $project_id,
+            $_SESSION['user_id'],
+            $input['name'] ?? '',
+            $input['description'] ?? '',
+            $input['color'] ?? '#4361ee',
+            $input['icon'] ?? '',
+            $input['is_favorite'] ?? false
+        )) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Projet modifié avec succès'
+            ]);
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false, 
+                'error' => 'Erreur lors de la modification du projet'
+            ]);
+        }
     } catch (Exception $e) {
         http_response_code(400);
         echo json_encode([

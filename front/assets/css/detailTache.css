@@ -1,0 +1,30 @@
+/* Style pour la section détails */
+#project-details-section {
+    border-left: 4px solid #17a2b8;
+}
+
+.project-color-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #dee2e6;
+    margin-right: 0.5rem;
+}
+
+/* Animation d'apparition */
+#project-details-section {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

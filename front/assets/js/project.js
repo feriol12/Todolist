@@ -312,8 +312,137 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function showProjectDetails(projectId) {
-  showToast("Info", `Détails du projet ${projectId} - À implémenter`, "info");
+// 🆕 FONCTION POUR AFFICHER LES DÉTAILS D'UN PROJET
+async function showProjectDetails(projectId) {
+    try {
+        // 1. Récupérer les infos du projet
+        const projectsResponse = await fetch(`${API_BASE_URL}projectApi.php?action=list`);
+        const projectsData = await projectsResponse.json();
+        
+        const project = projectsData.projects.find(p => p.id == projectId);
+        
+        if (!project) {
+            showToast("Erreur", "Projet non trouvé", "error");
+            return;
+        }
+
+        // 2. Récupérer les tâches de ce projet
+        const tasksResponse = await fetch(`${API_BASE_URL}taskApi.php?action=list&project_id=${projectId}`);
+        const tasksData = await tasksResponse.json();
+        
+        const projectTasks = tasksData.success ? tasksData.data : [];
+
+        // 3. Afficher les détails
+        displayProjectDetails(project, projectTasks);
+        
+    } catch (error) {
+        console.error("Erreur chargement détails:", error);
+        showToast("Erreur", "Impossible de charger les détails", "error");
+    }
+}
+
+// 🆕 FONCTION POUR AFFICHER LES DÉTAILS DANS L'INTERFACE
+function displayProjectDetails(project, tasks) {
+    // A. Mettre à jour les infos du projet
+    document.getElementById('project-details-name').textContent = project.name;
+    document.getElementById('project-details-description').textContent = project.description || 'Aucune description';
+    document.getElementById('project-details-color').textContent = project.color;
+    document.getElementById('project-details-color-badge').style.backgroundColor = project.color;
+    document.getElementById('project-details-favorite').innerHTML = project.is_favorite 
+        ? '<i class="fas fa-star text-warning"></i> Oui' 
+        : '<i class="far fa-star text-muted"></i> Non';
+
+    // B. Calculer et afficher les statistiques
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(task => task.status === 'done').length;
+    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    
+    document.getElementById('project-details-progress').style.width = `${progress}%`;
+    document.getElementById('project-details-progress').textContent = `${Math.round(progress)}%`;
+    document.getElementById('project-details-stats').textContent = 
+        `${completedTasks} sur ${totalTasks} tâches terminées`;
+
+    // C. Afficher le tableau des tâches
+    const tasksBody = document.getElementById('project-tasks-table-body');
+    
+    if (tasks.length === 0) {
+        tasksBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                    <i class="fas fa-tasks fa-2x mb-2"></i>
+                    <p>Aucune tâche dans ce projet</p>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="fas fa-plus me-1"></i>Créer une tâche
+                    </button>
+                </td>
+            </tr>
+        `;
+    } else {
+        tasksBody.innerHTML = tasks.map(task => `
+            <tr>
+                <td>
+                    <strong>${escapeHtml(task.title)}</strong>
+                </td>
+                <td>
+                    <small class="text-muted">${escapeHtml(task.description || 'Aucune description')}</small>
+                </td>
+                <td>
+                    <span class="badge bg-${getStatusBadgeColor(task.status)}">
+                        ${getStatusText(task.status)}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${getPriorityBadgeColor(task.priority)}">
+                        ${getPriorityText(task.priority)}
+                    </span>
+                </td>
+                <td>
+                    ${task.due_date ? formatDate(task.due_date) : 'Non définie'}
+                    ${task.due_time ? `<br><small class="text-muted">${task.due_time}</small>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // D. Afficher la section détails
+    document.getElementById('project-details-section').style.display = 'block';
+    
+    // E. Scroll vers la section détails
+    document.getElementById('project-details-section').scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
+// 🆕 FONCTION POUR CACHER LES DÉTAILS
+function hideProjectDetails() {
+    document.getElementById('project-details-section').style.display = 'none';
+}
+
+// 🛠️ FONCTIONS UTILITAIRES (assure-toi qu'elles existent)
+function getStatusText(status) {
+    const statusMap = { 'todo': 'À faire', 'in_progress': 'En cours', 'done': 'Terminée' };
+    return statusMap[status] || status;
+}
+
+function getPriorityText(priority) {
+    const priorityMap = { 'low': 'Basse', 'medium': 'Moyenne', 'high': 'Haute' };
+    return priorityMap[priority] || priority;
+}
+
+function getStatusBadgeColor(status) {
+    const colorMap = { 'todo': 'secondary', 'in_progress': 'warning', 'done': 'success' };
+    return colorMap[status] || 'secondary';
+}
+
+function getPriorityBadgeColor(priority) {
+    const colorMap = { 'low': 'success', 'medium': 'warning', 'high': 'danger' };
+    return colorMap[priority] || 'secondary';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Non définie';
+    return new Date(dateString).toLocaleDateString('fr-FR');
 }
 
 function editProject(projectId) {

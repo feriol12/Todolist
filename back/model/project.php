@@ -90,9 +90,9 @@ class Project
     // }
 
     public function getUserProjects($user_id)
-{
-    try {
-        $query = "SELECT 
+    {
+        try {
+            $query = "SELECT 
                     p.id,
                     p.uuid,
                     p.name,
@@ -120,62 +120,63 @@ class Project
                 GROUP BY p.id
                 ORDER BY p.is_favorite DESC, p.sort_order ASC, p.created_at DESC";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":user_id", $user_id);
-        $stmt->execute();
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":user_id", $user_id);
+            $stmt->execute();
 
-        $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Calculer ici le pourcentage d'avancement pour chaque projet
-        foreach ($projects as &$p) {
-            if ($p['task_count'] > 0) {
-                $p['progress_percent'] = round(($p['total_done'] / $p['task_count']) * 100);
-            } else {
-                $p['progress_percent'] = 0;
+            // Calculer ici le pourcentage d'avancement pour chaque projet
+            foreach ($projects as &$p) {
+                if ($p['task_count'] > 0) {
+                    $p['progress_percent'] = round(($p['total_done'] / $p['task_count']) * 100);
+                } else {
+                    $p['progress_percent'] = 0;
+                }
             }
+
+            return $projects;
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
         }
-
-        return $projects;
-
-    } catch (PDOException $e) {
-        throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
     }
-}
 
 
 
     // ✅ AJOUTE CES MÉTHODES DANS TA CLASSE PROJECT
 
-public function deleteProject($project_id) {
-    try {
-        // Soft delete (recommandé)
-        $query = "UPDATE " . $this->table_name . " 
+    public function deleteProject($project_id)
+    {
+        try {
+            // Soft delete (recommandé)
+            $query = "UPDATE " . $this->table_name . " 
                  SET is_active = 0 
                  WHERE id = :project_id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":project_id", $project_id);
-        
-        return $stmt->execute();
-    } catch (PDOException $e) {
-        throw new Exception("Erreur suppression projet: " . $e->getMessage());
-    }
-}
 
-public function toggleFavorite($project_id) {
-    try {
-        $query = "UPDATE " . $this->table_name . " 
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":project_id", $project_id);
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Erreur suppression projet: " . $e->getMessage());
+        }
+    }
+
+    public function toggleFavorite($project_id)
+    {
+        try {
+            $query = "UPDATE " . $this->table_name . " 
                  SET is_favorite = NOT is_favorite 
                  WHERE id = :project_id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":project_id", $project_id);
-        
-        return $stmt->execute();
-    } catch (PDOException $e) {
-        throw new Exception("Erreur mise à jour favori: " . $e->getMessage());
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":project_id", $project_id);
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Erreur mise à jour favori: " . $e->getMessage());
+        }
     }
-}
 
 
 
@@ -212,6 +213,66 @@ public function toggleFavorite($project_id) {
             return $result;
         } catch (PDOException $e) {
             throw new Exception("Erreur récupération stats dernier projet: " . $e->getMessage());
+        }
+    }
+
+    // Dans project.php - MÉTHODE COMPLÈTE ET SÉCURISÉE
+    public function softDelete($project_id, $user_id)
+    {
+        try {
+            // 1. Vérifier que le projet existe et appartient à l'utilisateur
+            $checkQuery = "SELECT id, name FROM " . $this->table_name . " 
+                      WHERE id = :id AND user_id = :user_id AND is_active = TRUE";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            $checkStmt->bindParam(':id', $project_id);
+            $checkStmt->bindParam(':user_id', $user_id);
+            $checkStmt->execute();
+
+            $project = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$project) {
+                throw new Exception("Projet non trouvé ou non autorisé");
+            }
+
+            // 2. Démarrer une transaction pour atomicité
+            $this->conn->beginTransaction();
+
+            // 3. Suppression logique du PROJET
+            $projectQuery = "UPDATE " . $this->table_name . " 
+                        SET is_active = FALSE, updated_at = NOW() 
+                        WHERE id = :id AND user_id = :user_id";
+            $projectStmt = $this->conn->prepare($projectQuery);
+            $projectStmt->bindParam(':id', $project_id);
+            $projectStmt->bindParam(':user_id', $user_id);
+            $projectStmt->execute();
+
+            // 4. Suppression logique des TÂCHES associées
+            $tasksQuery = "UPDATE tasks 
+                      SET is_active = FALSE, updated_at = NOW() 
+                      WHERE project_id = :project_id AND user_id = :user_id";
+            $tasksStmt = $this->conn->prepare($tasksQuery);
+            $tasksStmt->bindParam(':project_id', $project_id);
+            $tasksStmt->bindParam(':user_id', $user_id);
+            $tasksStmt->execute();
+
+            // 5. Compter le nombre de tâches supprimées
+            $tasksCount = $tasksStmt->rowCount();
+
+            // 6. Valider la transaction
+            $this->conn->commit();
+
+            // Retourner les infos pour le feedback
+            return [
+                'success' => true,
+                'project_name' => $project['name'],
+                'tasks_deleted' => $tasksCount
+            ];
+        } catch (PDOException $e) {
+            // Annuler la transaction en cas d'erreur
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw new Exception("Erreur suppression projet: " . $e->getMessage());
         }
     }
 

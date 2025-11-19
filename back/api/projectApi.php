@@ -38,6 +38,10 @@ try {
             handleProjectStats();
             break;
 
+        case 'delete':
+            handleProjectDelete();
+            break;
+
         default:
             http_response_code(400);
             echo json_encode([
@@ -160,7 +164,8 @@ function handleProjectList()
 }
 
 
-function handleProjectStats() {
+function handleProjectStats()
+{
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
@@ -168,16 +173,63 @@ function handleProjectStats() {
     }
 
     $project = new Project();
-    
+
     try {
         $stats = $project->getProjectsStats($_SESSION['user_id']);
-        
+
         echo json_encode([
             'success' => true,
             'stats' => $stats
         ]);
     } catch (Exception $e) {
         http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+function handleProjectDelete() {
+    session_start();
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
+        return;
+    }
+
+    // Récupérer les données JSON
+    $input = json_decode(file_get_contents("php://input"), true);
+    $project_id = $input['project_id'] ?? null;
+    
+    // Validation
+    if (!$project_id) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'ID projet manquant']);
+        return;
+    }
+
+    $project = new Project();
+    
+    try {
+        // Suppression logique du projet et des tâches
+        $result = $project->softDelete($project_id, $_SESSION['user_id']);
+        
+        if ($result['success']) {
+            echo json_encode([
+                'success' => true,
+                'message' => "Projet '{$result['project_name']}' supprimé avec succès",
+                'details' => [
+                    'project_name' => $result['project_name'],
+                    'tasks_deleted' => $result['tasks_deleted']
+                ]
+            ]);
+        }
+        
+    } catch (Exception $e) {
+        http_response_code(400);
         echo json_encode([
             'success' => false,
             'error' => $e->getMessage()

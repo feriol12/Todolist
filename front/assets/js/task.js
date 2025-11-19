@@ -1,7 +1,7 @@
 // Dans ton app.js principal
 document.addEventListener('DOMContentLoaded', function() {
     // Initialiser le gestionnaire de projets
-    window.projectsManager = new ProjectsManager();
+    window.projectsManager = new ProjectManager();
 });
 
 

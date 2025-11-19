@@ -332,6 +332,212 @@ class ProjectManager {
 
         toast.show();
     }
+
+
+    // 🔧 AJOUTER ces méthodes dans la classe ProjectManager
+
+static currentEditProjectId = null; // Stocker l'ID du projet en cours d'édition
+
+static async editProject(projectId) {
+    console.log('✏️ Édition du projet:', projectId);
+    
+    try {
+        // 1. Charger les données du projet
+        const project = await this.loadProjectData(projectId);
+        
+        if (project) {
+            // 2. Pré-remplir le modal
+            this.fillEditModal(project);
+            
+            // 3. Stocker l'ID pour la sauvegarde
+            this.currentEditProjectId = projectId;
+            
+            // 4. Ouvrir le modal
+            const modal = new bootstrap.Modal(document.getElementById('projectModal'));
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Erreur chargement projet:', error);
+        this.showToast('Erreur', 'Impossible de charger le projet', 'error');
+    }
+}
+
+static async loadProjectData(projectId) {
+    const response = await fetch(`${this.API_BASE_URL}projectApi.php?action=get&id=${projectId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+        return data.project;
+    } else {
+        throw new Error(data.error || 'Projet non trouvé');
+    }
+}
+
+static fillEditModal(project) {
+    // Changer le titre du modal
+    document.getElementById('projectModalTitle').textContent = 'Modifier le Projet';
+    
+    // Pré-remplir les champs
+    document.getElementById('projectName').value = project.name || '';
+    document.getElementById('projectDescription').value = project.description || '';
+    document.getElementById('projectColor').value = project.color || '#4361ee';
+    document.getElementById('projectIcon').value = project.icon || '';
+    document.getElementById('projectIsFavorite').checked = project.is_favorite || false;
+    
+    // Changer le texte du bouton
+    document.getElementById('saveProject').innerHTML = '<i class="fas fa-save me-2"></i>Modifier le projet';
+}
+
+static async handleProjectUpdate() {
+    const name = document.getElementById("projectName").value;
+    const description = document.getElementById("projectDescription").value;
+    const color = document.getElementById("projectColor").value;
+    const icon = document.getElementById("projectIcon").value;
+    const is_favorite = document.getElementById("projectIsFavorite").checked;
+
+    const btn = document.getElementById("saveProject");
+    
+    // Validation
+    if (!name.trim()) {
+        this.showToast("Erreur", "Le nom du projet est obligatoire", "error");
+        return;
+    }
+
+    btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Modification...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`${this.API_BASE_URL}projectApi.php?action=update`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                project_id: this.currentEditProjectId,
+                name: name,
+                description: description,
+                color: color,
+                icon: icon,
+                is_favorite: is_favorite,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Réponse API modification:", data);
+
+        if (data.success) {
+            this.showToast("Succès", "Projet modifié avec succès!", "success");
+            
+            // Fermer le modal et recharger
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('projectModal'));
+                if (modal) modal.hide();
+                
+                this.resetModal();
+                this.loadProjects(); // Recharger la liste
+                this.loadProjectsTable(); // Recharger le tableau
+                
+                // Rafraîchir les stats
+                if (window.StatsManager) StatsManager.refreshStats();
+                
+            }, 1500);
+        } else {
+            this.showToast("Erreur", data.error || "Erreur lors de la modification", "error");
+        }
+    } catch (error) {
+        console.error("Erreur modification:", error);
+        this.showToast("Erreur", error.message || "Problème de connexion au serveur", "error");
+    } finally {
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Modifier le projet';
+        btn.disabled = false;
+    }
+}
+
+static resetModal() {
+    // Réinitialiser le modal pour la création
+    document.getElementById('projectModalTitle').textContent = 'Nouveau Projet';
+    document.getElementById('projectForm').reset();
+    document.getElementById('saveProject').innerHTML = '<i class="fas fa-save me-2"></i>Créer le projet';
+    this.currentEditProjectId = null;
+}
+
+// 🔧 MODIFIER la méthode handleProject existante
+static async handleProject() {
+    // Si on est en mode édition
+    if (this.currentEditProjectId) {
+        await this.handleProjectUpdate();
+        return;
+    }
+    
+    // Sinon, création normale (votre code existant)
+    const name = document.getElementById("projectName").value;
+    const description = document.getElementById("projectDescription").value;
+    const color = document.getElementById("projectColor").value;
+    const icon = document.getElementById("projectIcon").value;
+    const is_favorite = document.getElementById("projectIsFavorite").checked;
+
+    const btn = document.getElementById("saveProject");
+    
+    // Validation
+    if (!name.trim()) {
+        this.showToast("Erreur", "Le nom du projet est obligatoire", "error");
+        return;
+    }
+
+    btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Création...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`${this.API_BASE_URL}projectApi.php?action=create`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                color: color,
+                icon: icon,
+                is_favorite: is_favorite,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Réponse API création:", data);
+
+        if (data.success) {
+            this.showToast("Succès", "Projet créé avec succès!", "success");
+            
+            // Fermer le modal et recharger
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('projectModal'));
+                if (modal) modal.hide();
+                
+                this.resetModal();
+                this.loadProjects();
+                
+                if (window.StatsManager) StatsManager.refreshStats();
+                this.loadProjectsTable();
+            }, 1500);
+        } else {
+            this.showToast("Erreur", data.error || "Erreur lors de la création", "error");
+        }
+    } catch (error) {
+        console.error("Erreur:", error);
+        this.showToast("Erreur", error.message || "Problème de connexion au serveur", "error");
+    } finally {
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Créer le projet';
+        btn.disabled = false;
+    }
+}
 }
 
 // Auto-initialisation

@@ -278,7 +278,7 @@
         <!-- Zone principale - Tâches -->
         <div class="col-lg-9 col-md-8">
           <!-- En-tête -->
-          <div class="d-flex justify-content-between align-items-center mb-4">
+          <!-- <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Mes Tâches</h3>
             <div class="btn-group">
               <button class="btn btn-outline-secondary" id="view-grid">
@@ -288,19 +288,30 @@
                 <i class="fas fa-list"></i>
               </button>
             </div>
-          </div>
+          </div> -->
 
           <!-- Loading -->
           <div id="loading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Chargement...</span>
             </div>
-            <p class="mt-2">Chargement des tâches...</p>
+            <p class="mt-2">Chargement des projets...</p>
           </div>
 
           <!-- Grille des tâches -->
-          <div id="tasks-container" class="row" style="display: none">
+          <!-- <div id="tasks-container" class="row" style="display: none"> -->
             <!-- Les tâches seront injectées ici par JavaScript -->
+          <!-- </div> -->
+
+          <!-- BOUTON ARCHIVES - AU-DESSUS DE LA RECHERCHE -->
+          <div class="d-flex justify-content-end mb-2">
+            <button
+              class="btn btn-outline-warning btn-sm"
+              id="show-archives-btn"
+            >
+              <i class="fas fa-archive me-1"></i>Archives
+              <span class="badge bg-danger ms-1" id="archives-count"></span>
+            </button>
           </div>
 
           <!-- Barre de recherche projets - VERSION SIMPLIFIÉE -->
@@ -751,6 +762,63 @@
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ARCHIVES - À METTRE AVEC LES AUTRES MODALS -->
+    <div class="modal fade" id="archivesModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+              <i class="fas fa-archive me-2"></i>Projets Archivés
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- TABLEAU IDENTIQUE AUX PROJETS -->
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover table-striped">
+                <thead class="table-dark">
+                  <tr>
+                    <th width="25%">Projet</th>
+                    <th width="25%">Description</th>
+                    <th width="15%">Nbr Tâches</th>
+                    <th width="10%">Statut</th>
+                    <th width="25%">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="archivesTableBody">
+                  <!-- Les projets archivés seront injectés ici -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- PAGINATION ARCHIVES -->
+            <nav aria-label="Pagination des archives" id="archives-pagination">
+              <ul class="pagination justify-content-center mb-0">
+                <!-- La pagination sera générée par JavaScript -->
+              </ul>
+            </nav>
+
+            <!-- MESSAGE VIDE -->
+            <div
+              id="archives-empty-state"
+              class="text-center py-5"
+              style="display: none"
+            >
+              <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+              <h4 class="text-muted">Aucun projet archivé</h4>
+              <p class="text-muted">
+                Les projets que vous supprimez apparaîtront ici.
+              </p>
+            </div>
           </div>
         </div>
       </div>

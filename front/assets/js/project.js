@@ -396,9 +396,33 @@ static displayProjectDetails(project, tasks) {
                     ${task.due_date ? this.formatDate(task.due_date) : 'Non définie'}
                     ${task.due_time ? `<br><small class="text-muted">${task.due_time}</small>` : ''}
                 </td>
+                <td class="task-actions">
+                    <div class="btn-group btn-group-sm">
+                       
+                        
+                        <button class="btn btn-outline-primary" onclick="TaskManager.editTask(${task.id})" 
+                                title="Modifier la tâche">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-warning" onclick="TaskManager.toggleFavorite(${task.id})" 
+                                title="${task.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                            <i class="fas ${task.is_favorite ? 'fa-star' : 'fa-star'}"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-danger" onclick="TaskManager.deleteTask(${task.id},this)" 
+                                title="Supprimer la tâche">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
             </tr>
         `).join('');
     }
+
+
+   
+
 
     // D. Afficher la section détails
     document.getElementById('project-details-section').style.display = 'block';
@@ -441,9 +465,7 @@ static formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('fr-FR');
 }
 
-    static editProject(projectId) {
-        this.showToast("Info", `Édition du projet ${projectId} - À implémenter`, "info");
-    }
+   
 
     static showToast(title, message, type = "info") {
         const toastElement = document.getElementById("liveToast");

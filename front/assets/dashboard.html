@@ -298,108 +298,171 @@
             <p class="mt-2">Chargement des tâches...</p>
           </div>
 
-        <!-- Grille des tâches -->
-        <div id="tasks-container" class="row" style="display: none">
-          <!-- Les tâches seront injectées ici par JavaScript -->
-        </div>
+          <!-- Grille des tâches -->
+          <div id="tasks-container" class="row" style="display: none">
+            <!-- Les tâches seront injectées ici par JavaScript -->
+          </div>
 
-       <!-- Tableau des projets -->
-<div id="projects-table" style="display: block;">
-    <div class="card">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-folder me-2"></i>Mes Projets
-            </h5>
-            <span class="badge bg-light text-dark" id="projects-count">0 projets</span>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover table-striped">
+          <!-- Barre de recherche projets - VERSION SIMPLIFIÉE -->
+          <div class="card mb-4">
+            <div class="card-body py-3">
+              <div class="row align-items-center">
+                <div class="col-md-12">
+                  <!-- ✅ Prend toute la largeur -->
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="project-search-input"
+                      placeholder="Rechercher un projet par nom, description..."
+                      aria-label="Rechercher un projet"
+                    />
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      id="project-search-btn"
+                    >
+                      <i class="fas fa-search"></i>
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      id="project-search-clear"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+                <!-- ❌ SUPPRIMER la colonne avec le switch favoris -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Tableau des projets -->
+          <div id="projects-table" style="display: block">
+            <div class="card">
+              <div
+                class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+              >
+                <h5 class="mb-0">
+                  <i class="fas fa-folder me-2"></i>Mes Projets
+                </h5>
+                <span class="badge bg-light text-dark" id="projects-count"
+                  >0 projets</span
+                >
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover table-striped">
                     <thead class="table-dark">
-                        <tr>
-                            <th width="25%">Projet</th>
-                            <th width="30%">Description</th>
-                            <th width="15%">Nbr Tâches</th>
-                            <th width="10%">Statut</th>
-                            <th width="20%">Actions</th>
-                        </tr>
+                      <tr>
+                        <th width="25%">Projet</th>
+                        <th width="30%">Description</th>
+                        <th width="15%">Nbr Tâches</th>
+                        <th width="10%">Statut</th>
+                        <th width="20%">Actions</th>
+                      </tr>
                     </thead>
                     <tbody id="projectsTableBody">
-                        <!-- Les projets seront injectés ici -->
+                      <!-- Les projets seront injectés ici -->
                     </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+                  </table>
+                </div>
 
- <!-- a garder -->
-<!-- Section détails du projet (cachée par défaut) -->
-<div id="project-details-section" class="mt-4" style="display: none;">
-    <div class="card">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-list me-2"></i>
-                Détails du projet: <span id="project-details-name"></span>
-            </h5>
-            <button class="btn btn-sm btn-light" onclick="ProjectManager.hideProjectDetails()">
-                <i class="fas fa-times me-1"></i> Fermer
-            </button>
-        </div>
-        <div class="card-body">
-            <!-- Infos du projet -->
-            <div class="row mb-4">
-                <div class="col-md-6">
+                <!-- Pagination - NOUVEAU -->
+                <nav
+                  aria-label="Pagination des projets"
+                  id="projects-pagination"
+                >
+                  <ul class="pagination justify-content-center mb-0">
+                    <!-- La pagination sera générée par JavaScript -->
+                  </ul>
+                </nav>
+              </div>
+            </div>
+          </div>
+
+          <!-- a garder -->
+          <!-- Section détails du projet (cachée par défaut) -->
+          <div id="project-details-section" class="mt-4" style="display: none">
+            <div class="card">
+              <div
+                class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+              >
+                <h5 class="mb-0">
+                  <i class="fas fa-list me-2"></i>
+                  Détails du projet: <span id="project-details-name"></span>
+                </h5>
+                <button
+                  class="btn btn-sm btn-light"
+                  onclick="ProjectManager.hideProjectDetails()"
+                >
+                  <i class="fas fa-times me-1"></i> Fermer
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- Infos du projet -->
+                <div class="row mb-4">
+                  <div class="col-md-6">
                     <h6>Informations</h6>
                     <table class="table table-sm table-bordered">
-                        <tr>
-                            <td><strong>Description:</strong></td>
-                            <td id="project-details-description"></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Couleur:</strong></td>
-                            <td>
-                                <span class="project-color-badge" id="project-details-color-badge"></span>
-                                <span id="project-details-color"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Favori:</strong></td>
-                            <td id="project-details-favorite"></td>
-                        </tr>
+                      <tr>
+                        <td><strong>Description:</strong></td>
+                        <td id="project-details-description"></td>
+                      </tr>
+                      <tr>
+                        <td><strong>Couleur:</strong></td>
+                        <td>
+                          <span
+                            class="project-color-badge"
+                            id="project-details-color-badge"
+                          ></span>
+                          <span id="project-details-color"></span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><strong>Favori:</strong></td>
+                        <td id="project-details-favorite"></td>
+                      </tr>
                     </table>
-                </div>
-                <div class="col-md-6">
+                  </div>
+                  <div class="col-md-6">
                     <h6>Statistiques</h6>
-                    <div class="progress mb-2" style="height: 20px;">
-                        <div class="progress-bar" id="project-details-progress" role="progressbar"></div>
+                    <div class="progress mb-2" style="height: 20px">
+                      <div
+                        class="progress-bar"
+                        id="project-details-progress"
+                        role="progressbar"
+                      ></div>
                     </div>
-                    <small class="text-muted" id="project-details-stats"></small>
+                    <small
+                      class="text-muted"
+                      id="project-details-stats"
+                    ></small>
+                  </div>
                 </div>
-            </div>
 
-            <!-- Tableau des tâches du projet -->
-            <h6>Tâches du projet</h6>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover table-striped">
+                <!-- Tableau des tâches du projet -->
+                <h6>Tâches du projet</h6>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover table-striped">
                     <thead class="table-dark">
-                        <tr>
-                            <th width="25%">Tâche</th>
-                            <th width="30%">Description</th>
-                            <th width="15%">Statut</th>
-                            <th width="15%">Priorité</th>
-                            <th width="15%">Échéance</th>
-                        </tr>
+                      <tr>
+                        <th width="25%">Tâche</th>
+                        <th width="30%">Description</th>
+                        <th width="15%">Statut</th>
+                        <th width="15%">Priorité</th>
+                        <th width="15%">Échéance</th>
+                      </tr>
                     </thead>
                     <tbody id="project-tasks-table-body">
-                        <!-- Les tâches du projet seront injectées ici -->
+                      <!-- Les tâches du projet seront injectées ici -->
                     </tbody>
-                </table>
+                  </table>
+                </div>
+              </div>
             </div>
-        </div>
-    </div>
-</div>
-
+          </div>
 
           <!-- Message vide -->
           <div id="empty-state" class="text-center py-5" style="display: none">
@@ -526,13 +589,14 @@
             <form id="taskForm">
               <input type="hidden" id="taskId" />
 
-            <div class="mb-3">
-              <label for="Project" class="form-label">Choisisez votre projet *</label>
-              <select class="form-select" id="project">
-                <option value="todo">À faire</option>
-
-              </select>
-            </div>
+              <div class="mb-3">
+                <label for="Project" class="form-label"
+                  >Choisisez votre projet *</label
+                >
+                <select class="form-select" id="project">
+                  <option value="todo">À faire</option>
+                </select>
+              </div>
 
               <div class="mb-3">
                 <label for="taskTitle" class="form-label">Titre *</label>
@@ -715,7 +779,7 @@
     <script src="js/task.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <script src="js/project.js"></script>
+    <script src="js/project.js"></script>
     <script src="js/navbar-manager.js"></script>
     <script src="js/stats-manager.js"></script>
   </body>

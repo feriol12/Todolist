@@ -213,77 +213,81 @@ class ProjectManager {
         }
     }
 
-    static renderProjectsTable(projects) {
-        const tbody = document.getElementById("projectsTableBody");
-        if (!tbody) {
-            console.warn("Tableau projets non trouvé");
-            return;
-        }
+   static renderProjectsTable(projects) {
+    const tbody = document.getElementById("projectsTableBody");
+    if (!tbody) {
+        console.warn("Tableau projets non trouvé");
+        return;
+    }
 
-        if (!projects || projects.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
-                        <i class="fas fa-folder-open fa-2x mb-2"></i>
-                        <p>Aucun projet créé</p>
-                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#projectModal">
-                            <i class="fas fa-plus me-1"></i>Créer un projet
-                        </button>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = projects.map(project => `
+    if (!projects || projects.length === 0) {
+        tbody.innerHTML = `
             <tr>
-                <td>
-                    <div class="project-name">
-                        <span class="project-color-badge" style="background-color: ${project.color || '#4361ee'}"></span>
-                        <div>
-                            <div>${this.escapeHtml(project.name)}</div>
-                            ${project.is_favorite ? '<i class="fas fa-star text-warning" title="Favori"></i>' : ''}
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <small class="text-muted">${this.escapeHtml(project.description || 'Aucune description')}</small>
-                </td>
-                <td>
-                    <div class="project-stats">
-                        <span class="badge bg-primary">${project.task_count || 0} tâches</span>
-                        <small class="text-muted d-block">${project.total_done || 0} terminées</small>
-                    </div>
-                </td>
-                <td>
-                    ${this.getProjectStatusBadge(project)}
-                </td>
-                <td class="project-actions">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info" onclick="ProjectManager.showProjectDetails(${project.id})" 
-                                title="Voir les détails">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        
-                        <button class="btn btn-outline-primary" onclick="ProjectManager.editProject(${project.id})" 
-                                title="Modifier le projet">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        
-                        <button class="btn btn-outline-warning" onclick="ProjectManager.toggleFavorite(${project.id})" 
-                                title="${project.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
-                            <i class="fas ${project.is_favorite ? 'fa-star' : 'fa-star'}"></i>
-                        </button>
-                        
-                        <button class="btn btn-outline-danger" onclick="ProjectManager.deleteProject(${project.id})" 
-                                title="Supprimer le projet">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-folder-open fa-2x mb-2"></i>
+                    <p>Aucun projet créé</p>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#projectModal">
+                        <i class="fas fa-plus me-1"></i>Créer un projet
+                    </button>
                 </td>
             </tr>
-        `).join('');
+        `;
+        return;
     }
+
+    tbody.innerHTML = projects.map(project => `
+        <tr>
+            <td>
+                <div class="project-name">
+                    <div class="d-flex align-items-start">
+                        <span class="project-color-badge me-2 mt-1" style="background-color: ${project.color || '#4361ee'}"></span>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${this.escapeHtml(project.name)}</span>
+                            </div>
+                            ${project.is_favorite ? '<div><i class="fas fa-star text-warning" title="Favori"></i></div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <small class="text-muted">${this.escapeHtml(project.description || 'Aucune description')}</small>
+            </td>
+            <td>
+                <div class="project-stats">
+                    <span class="badge bg-primary">${project.task_count || 0} tâches</span>
+                    <small class="text-muted d-block">${project.total_done || 0} terminées</small>
+                </div>
+            </td>
+            <td>
+                ${this.getProjectStatusBadge(project)}
+            </td>
+            <td class="project-actions">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-info" onclick="ProjectManager.showProjectDetails(${project.id})" 
+                            title="Voir les détails">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    
+                    <button class="btn btn-outline-primary" onclick="ProjectManager.editProject(${project.id})" 
+                            title="Modifier le projet">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    
+                    <button class="btn btn-outline-warning" onclick="ProjectManager.toggleFavorite(${project.id})" 
+                            title="${project.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                        <i class="${project.is_favorite ? 'fas' : 'far'} fa-star"></i>
+                    </button>
+                    
+                    <button class="btn btn-outline-danger" onclick="ProjectManager.deleteProject(${project.id})" 
+                            title="Supprimer le projet">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
 
     // 🛠️ FONCTIONS UTILITAIRES
     static getProjectStatusBadge(project) {

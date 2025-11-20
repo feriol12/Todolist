@@ -17,6 +17,9 @@ class ProjectManager {
         // 🔍 INITIALISATION RECHERCHE
         this.initSearchEvents();
         
+         // 🗑️ NOUVEL ÉVÉNEMENT ARCHIVES
+        document.getElementById("show-archives-btn")?.addEventListener("click", () => this.openArchivesModal());
+
         // ✅ CHARGEMENT INITIAL
         this.loadProjects();
         
@@ -613,7 +616,7 @@ class ProjectManager {
         document.getElementById('project-details-section').style.display = 'none';
     }
 
-    // 🛠️ FONCTIONS UTILITAIRES (assure-toi qu'elles existent)
+// 🛠️ FONCTIONS UTILITAIRES (assure-toi qu'elles existent)
     static getStatusText(status) {
         const statusMap = { 'todo': 'À faire', 'in_progress': 'En cours', 'done': 'Terminée' };
         return statusMap[status] || status;
@@ -770,6 +773,232 @@ class ProjectManager {
 
         toast.show();
     }
+
+    // ✅ AJOUTER CES MÉTHODES DANS ProjectManager
+
+static async openArchivesModal() {
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('archivesModal'));
+        modal.show();
+        
+        // Charger les archives
+        await this.loadArchivesTable();
+    } catch (error) {
+        console.error("Erreur ouverture archives:", error);
+        this.showToast("Erreur", "Impossible d'ouvrir les archives", "error");
+    }
+}
+
+static async loadArchivesTable() {
+    try {
+        const response = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=list_archived`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            this.renderArchivesTable(data.projects);
+            this.updateArchivesCount(data.count);
+        } else {
+            console.error("Erreur API archives:", data.error);
+        }
+    } catch (error) {
+        console.error("Erreur chargement archives:", error);
+        this.showToast("Erreur", "Problème de connexion au serveur", "error");
+    }
+}
+
+static renderArchivesTable(projects) {
+    const tbody = document.getElementById("archivesTableBody");
+    const emptyState = document.getElementById("archives-empty-state");
+    
+    if (!tbody) return;
+
+    if (!projects || projects.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    
+    tbody.innerHTML = projects.map(project => `
+        <tr>
+            <td>
+                <div class="project-name">
+                    <div class="d-flex align-items-start">
+                        <span class="project-color-badge me-2 mt-1" style="background-color: ${project.color || '#4361ee'}"></span>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${this.escapeHtml(project.name)}</span>
+                            </div>
+                            ${project.is_favorite ? '<div><i class="fas fa-star text-warning" title="Favori"></i></div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <small class="text-muted">${this.escapeHtml(project.description || 'Aucune description')}</small>
+            </td>
+            <td>
+                <div class="project-stats">
+                    <span class="badge bg-primary">${project.task_count || 0} tâches</span>
+                    <small class="text-muted d-block">${project.total_done || 0} terminées</small>
+                </div>
+            </td>
+            <td>
+                ${this.getProjectStatusBadge(project)}
+            </td>
+            <td class="project-actions">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-info" onclick="ProjectManager.showArchivedProjectDetails(${project.id})" 
+                            title="Voir les détails">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    
+                    <button class="btn btn-outline-success" onclick="ProjectManager.restoreProject(${project.id})" 
+                            title="Restaurer le projet">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    
+                    <button class="btn btn-outline-danger" onclick="ProjectManager.permanentDeleteProject(${project.id})" 
+                            title="Supprimer définitivement">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+static updateArchivesCount(count) {
+    const badge = document.getElementById('archives-count');
+    if (badge) {
+        badge.textContent = count;
+    }
+}
+
+// Méthodes d'actions pour les archives
+static async restoreProject(projectId) {
+    if (!confirm('Restaurer ce projet ? Il réapparaîtra dans vos projets actifs.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=restore`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ project_id: projectId }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            this.showToast("Succès", "Projet restauré avec succès", "success");
+            // Recharger les archives et les projets actifs
+            this.loadArchivesTable();
+            this.loadProjectsTable();
+        } else {
+            this.showToast("Erreur", data.error || "Erreur lors de la restauration", "error");
+        }
+    } catch (error) {
+        console.error("Erreur restauration:", error);
+        this.showToast("Erreur", "Problème de connexion au serveur", "error");
+    }
+}
+
+static async permanentDeleteProject(projectId) {
+    if (!confirm('SUPPRESSION DÉFINITIVE ! Ce projet et toutes ses tâches seront effacés. Cette action est irréversible.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=permanent_delete`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ project_id: projectId }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            this.showToast("Succès", "Projet supprimé définitivement", "success");
+            // Recharger les archives
+            this.loadArchivesTable();
+        } else {
+            this.showToast("Erreur", data.error || "Erreur lors de la suppression", "error");
+        }
+    } catch (error) {
+        console.error("Erreur suppression:", error);
+        this.showToast("Erreur", "Problème de connexion au serveur", "error");
+    }
+}
+
+static async showArchivedProjectDetails(projectId) {
+    try {
+        // 1. Récupérer les infos du projet archivé AVEC SES TÂCHES
+        const archivesResponse = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=list_archived`);
+        const archivesData = await archivesResponse.json();
+        
+        const project = archivesData.projects.find(p => p.id == projectId);
+        
+        if (!project) {
+            this.showToast("Erreur", "Projet archivé non trouvé", "error");
+            return;
+        }
+
+        // 2. Utiliser les tâches déjà incluses dans la réponse du projet
+        const projectTasks = project.tasks || [];
+
+        // 3. Afficher les détails
+        this.displayProjectDetails(project, projectTasks);
+        
+        // 4. Ajouter les badges
+        const detailsSection = document.getElementById('project-details-section');
+        if (detailsSection) {
+            const header = detailsSection.querySelector('.card-header');
+            if (header && !header.querySelector('.archived-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-warning archived-badge ms-2';
+                badge.innerHTML = '<i class="fas fa-archive me-1"></i>Archivé';
+                header.querySelector('h5').appendChild(badge);
+            }
+            
+            // Indiquer les tâches archivées
+            const inactiveTasks = projectTasks.filter(task => task.is_active === false || task.is_active === 0);
+            if (inactiveTasks.length > 0) {
+                const taskBadge = document.createElement('span');
+                taskBadge.className = 'badge bg-secondary ms-2';
+                taskBadge.innerHTML = `<i class="fas fa-eye-slash me-1"></i>${inactiveTasks.length} tâche(s) archivée(s)`;
+                header.querySelector('h5').appendChild(taskBadge);
+            }
+        }
+        
+    } catch (error) {
+        console.error("Erreur chargement détails projet archivé:", error);
+        this.showToast("Erreur", "Impossible de charger les détails du projet archivé", "error");
+    }
+}
+
+// 🆕 Surcharger la méthode hideProjectDetails pour nettoyer le badge archivé
+static hideProjectDetails() {
+    const detailsSection = document.getElementById('project-details-section');
+    if (detailsSection) {
+        // Supprimer le badge archivé si présent
+        const archivedBadge = detailsSection.querySelector('.archived-badge');
+        if (archivedBadge) {
+            archivedBadge.remove();
+        }
+    }
+    document.getElementById('project-details-section').style.display = 'none';
+}
 }
 
 // Auto-initialisation

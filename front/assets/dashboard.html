@@ -24,7 +24,7 @@
 
   <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
       <div class="container">
         <a class="navbar-brand" href="#">
           <i class="fas fa-tasks me-2"></i>
@@ -296,6 +296,11 @@
               <span class="visually-hidden">Chargement...</span>
             </div>
             <p class="mt-2">Chargement des projets...</p>
+          </div>
+
+          <!-- État vide (caché au départ) -->
+          <div id="empty-state" class="text-center py-5" style="display: none;">
+              <!-- ... ton code état vide ... -->
           </div>
 
           <!-- Grille des tâches -->

@@ -89,44 +89,45 @@ class Project
     //     }
     // }
 
-    public function getUserProjects($user_id)
+    public function getUserProjects($user_id, $search_term = null)
     {
         try {
             $query = "SELECT 
-                    p.id,
-                    p.uuid,
-                    p.name,
-                    p.description,
-                    p.color,
-                    p.icon,
-                    p.is_favorite,
-                    p.created_at,
+                p.id,
+                p.uuid,
+                p.name,
+                p.description,
+                p.color,
+                p.icon,
+                p.is_favorite,
+                p.created_at,
+                COUNT(t.id) AS task_count,
+                SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS total_done,
+                SUM(CASE WHEN t.status = 'in_progress' THEN 1 ELSE 0 END) AS total_in_progress,
+                SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS total_todo
+                
+            FROM projects p
+            LEFT JOIN tasks t ON t.project_id = p.id AND t.is_active = 1
+            WHERE p.user_id = ? AND p.is_active = 1";
 
-                    -- Nombre total de tâches
-                    COUNT(t.id) AS task_count,
+            $params = [$user_id];
 
-                    -- Nombre de tâches terminées
-                    SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS total_done,
+            if (!empty($search_term)) {
+                $query .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+                $search_pattern = "%" . $search_term . "%";
+                $params[] = $search_pattern;
+                $params[] = $search_pattern;
+            }
 
-                    -- Nombre de tâches en cours
-                    SUM(CASE WHEN t.status = 'in_progress' THEN 1 ELSE 0 END) AS total_in_progress,
-
-                    -- Nombre de tâches à faire
-                    SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS total_todo
-                    
-                FROM projects p
-                LEFT JOIN tasks t ON t.project_id = p.id AND t.is_active = 1
-                WHERE p.user_id = :user_id AND p.is_active = 1
-                GROUP BY p.id
-                ORDER BY p.is_favorite DESC, p.sort_order ASC, p.created_at DESC";
+            $query .= " GROUP BY p.id
+                ORDER BY p.is_favorite DESC, p.created_at DESC";
 
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $user_id);
-            $stmt->execute();
+            $stmt->execute($params);
 
             $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Calculer ici le pourcentage d'avancement pour chaque projet
+            // Calculer le pourcentage d'avancement
             foreach ($projects as &$p) {
                 if ($p['task_count'] > 0) {
                     $p['progress_percent'] = round(($p['total_done'] / $p['task_count']) * 100);
@@ -140,8 +141,6 @@ class Project
             throw new Exception("Erreur lors de la récupération des projets: " . $e->getMessage());
         }
     }
-
-
 
     // ✅ AJOUTE CES MÉTHODES DANS TA CLASSE PROJECT
 
@@ -329,6 +328,195 @@ class Project
             return $stmt->execute();
         } catch (PDOException $e) {
             throw new Exception("Erreur modification projet: " . $e->getMessage());
+        }
+    }
+
+    // ✅ AJOUTER CES MÉTHODES DANS TA CLASSE PROJECT EXISTANTE
+
+ public function getArchivedProjects($user_id) {
+    try {
+        // ♻️ SUPPRESSION AUTO DES PROJETS DE +2 ANS
+        $delete_old = "DELETE FROM projects 
+                      WHERE user_id = :user_id 
+                      AND is_active = 0 
+                      AND created_at < DATE_SUB(NOW(), INTERVAL 2 YEAR)";
+        $stmt_delete = $this->conn->prepare($delete_old);
+        $stmt_delete->bindParam(':user_id', $user_id);
+        $stmt_delete->execute();
+        $deleted_count = $stmt_delete->rowCount();
+        
+        if ($deleted_count > 0) {
+            error_log("♻️ Suppression auto de $deleted_count projets archivés de +2 ans");
+        }
+
+        // 📋 RÉCUPÉRATION DES PROJETS ARCHIVÉS
+        $query = "SELECT 
+                p.id,
+                p.uuid,
+                p.name,
+                p.description,
+                p.color,
+                p.icon,
+                p.is_favorite,
+                p.created_at,
+                COUNT(t.id) AS task_count,
+                SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS total_done,
+                SUM(CASE WHEN t.status = 'in_progress' THEN 1 ELSE 0 END) AS total_in_progress,
+                SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS total_todo
+                
+            FROM projects p
+            LEFT JOIN tasks t ON t.project_id = p.id  -- 🆕 PLUS DE FILTRE is_active
+            WHERE p.user_id = :user_id AND p.is_active = 0
+            GROUP BY p.id
+            ORDER BY p.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+
+        $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 🆕 RÉCUPÉRATION SÉPARÉE DES TÂCHES POUR CHAQUE PROJET
+        foreach ($projects as &$project) {
+            // Calcul pourcentage
+            if ($project['task_count'] > 0) {
+                $project['progress_percent'] = round(($project['total_done'] / $project['task_count']) * 100);
+            } else {
+                $project['progress_percent'] = 0;
+            }
+            
+            // 🆕 RÉCUPÉRER LES TÂCHES DE CE PROJET
+            $tasksQuery = "SELECT 
+                    id, title, description, status, priority, 
+                    due_date, due_time, is_active, completed_at,
+                    created_at
+                FROM tasks 
+                WHERE project_id = :project_id
+                ORDER BY 
+                    CASE status 
+                        WHEN 'todo' THEN 1
+                        WHEN 'in_progress' THEN 2  
+                        WHEN 'done' THEN 3
+                    END,
+                    created_at DESC";
+            
+            $tasksStmt = $this->conn->prepare($tasksQuery);
+            $tasksStmt->bindParam(':project_id', $project['id']);
+            $tasksStmt->execute();
+            $project['tasks'] = $tasksStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $projects;
+        
+    } catch (PDOException $e) {
+        error_log("❌ Erreur getArchivedProjects: " . $e->getMessage());
+        throw new Exception("Erreur récupération archives: " . $e->getMessage());
+    }
+}
+
+   public function restoreProject($project_id, $user_id) {
+    try {
+        // Vérifier que le projet existe et appartient à l'utilisateur
+        $checkQuery = "SELECT id FROM " . $this->table_name . " 
+                      WHERE id = :id AND user_id = :user_id AND is_active = 0";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':id', $project_id);
+        $checkStmt->bindParam(':user_id', $user_id);
+        $checkStmt->execute();
+
+        if ($checkStmt->rowCount() === 0) {
+            throw new Exception("Projet archivé non trouvé ou non autorisé");
+        }
+
+        // 🆕 DÉMARRER UNE TRANSACTION
+        $this->conn->beginTransaction();
+
+        // 1. Restaurer le projet
+        $projectQuery = "UPDATE " . $this->table_name . " 
+                 SET is_active = 1, updated_at = NOW()
+                 WHERE id = :id AND user_id = :user_id";
+        $projectStmt = $this->conn->prepare($projectQuery);
+        $projectStmt->bindParam(':id', $project_id);
+        $projectStmt->bindParam(':user_id', $user_id);
+        $projectStmt->execute();
+
+        // 🆕 2. RESTAURER LES TÂCHES ASSOCIÉES
+        $tasksQuery = "UPDATE tasks 
+                 SET is_active = 1, updated_at = NOW()
+                 WHERE project_id = :project_id AND user_id = :user_id";
+        $tasksStmt = $this->conn->prepare($tasksQuery);
+        $tasksStmt->bindParam(':project_id', $project_id);
+        $tasksStmt->bindParam(':user_id', $user_id);
+        $tasksStmt->execute();
+        $restoredTasksCount = $tasksStmt->rowCount();
+
+        // 🆕 VALIDER LA TRANSACTION
+        $this->conn->commit();
+
+        error_log("✅ Projet $project_id restauré avec $restoredTasksCount tâches");
+
+        return [
+            'success' => true,
+            'restored_tasks' => $restoredTasksCount
+        ];
+        
+    } catch (PDOException $e) {
+        // 🆕 ANNULER LA TRANSACTION EN CAS D'ERREUR
+        if ($this->conn->inTransaction()) {
+            $this->conn->rollBack();
+        }
+        throw new Exception("Erreur restauration projet: " . $e->getMessage());
+    }
+}
+
+    public function permanentDelete($project_id, $user_id)
+    {
+        try {
+            // Vérifier que le projet existe et appartient à l'utilisateur
+            $checkQuery = "SELECT id, name FROM " . $this->table_name . " 
+                      WHERE id = :id AND user_id = :user_id AND is_active = 0";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            $checkStmt->bindParam(':id', $project_id);
+            $checkStmt->bindParam(':user_id', $user_id);
+            $checkStmt->execute();
+
+            $project = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$project) {
+                throw new Exception("Projet archivé non trouvé ou non autorisé");
+            }
+
+            // Démarrer une transaction pour atomicité
+            $this->conn->beginTransaction();
+
+            // 1. Supprimer les tâches associées
+            $tasksQuery = "DELETE FROM tasks WHERE project_id = :project_id AND user_id = :user_id";
+            $tasksStmt = $this->conn->prepare($tasksQuery);
+            $tasksStmt->bindParam(':project_id', $project_id);
+            $tasksStmt->bindParam(':user_id', $user_id);
+            $tasksStmt->execute();
+            $tasksCount = $tasksStmt->rowCount();
+
+            // 2. Supprimer le projet
+            $projectQuery = "DELETE FROM " . $this->table_name . " 
+                        WHERE id = :id AND user_id = :user_id";
+            $projectStmt = $this->conn->prepare($projectQuery);
+            $projectStmt->bindParam(':id', $project_id);
+            $projectStmt->bindParam(':user_id', $user_id);
+            $projectStmt->execute();
+
+            // Valider la transaction
+            $this->conn->commit();
+
+            error_log("🗑️ Suppression définitive projet '{$project['name']}' avec $tasksCount tâches");
+
+            return true;
+        } catch (PDOException $e) {
+            // Annuler la transaction en cas d'erreur
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw new Exception("Erreur suppression définitive: " . $e->getMessage());
         }
     }
 

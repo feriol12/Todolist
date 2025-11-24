@@ -144,32 +144,31 @@ function handleProjectCreate()
     }
 }
 
-function handleProjectList()
-{
-    // ✅ VÉRIFIER LA SESSION ICI AUSSI
+function handleProjectList() {
+    session_start();
+    
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Utilisateur non connecté'
-        ]);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
         return;
     }
 
     $project = new Project();
+    $search_term = $_GET['search'] ?? null;
 
     try {
-        $projects = $project->getUserProjects($_SESSION['user_id']);
-
+        $projects = $project->getUserProjects($_SESSION['user_id'], $search_term);
+        
         echo json_encode([
             'success' => true,
             'projects' => $projects
         ]);
+        
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'error' => $e->getMessage()
+            'error' => 'Erreur lors du chargement des projets'
         ]);
     }
 }
@@ -345,10 +344,11 @@ function handleProjectUpdate()
 }
 
 
-function handleToggleFavorite() {
+function handleToggleFavorite()
+{
     // Démarrer la session comme dans tes autres fonctions
     session_start();
-    
+
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
@@ -357,7 +357,7 @@ function handleToggleFavorite() {
 
     $input = json_decode(file_get_contents("php://input"), true);
     $project_id = $input['project_id'] ?? null;
-    
+
     if (!$project_id) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'ID projet manquant']);
@@ -365,12 +365,12 @@ function handleToggleFavorite() {
     }
 
     $project = new Project();
-    
+
     try {
         if ($project->toggleFavorite($project_id, $_SESSION['user_id'])) {
             // Récupérer le nouvel état pour le feedback
             $projectData = $project->getById($project_id, $_SESSION['user_id']);
-            
+
             echo json_encode([
                 'success' => true,
                 'message' => $projectData['is_favorite'] ? 'Projet ajouté aux favoris ★' : 'Projet retiré des favoris',
@@ -379,7 +379,7 @@ function handleToggleFavorite() {
         } else {
             http_response_code(400);
             echo json_encode([
-                'success' => false, 
+                'success' => false,
                 'error' => 'Erreur lors de la mise à jour du favori'
             ]);
         }

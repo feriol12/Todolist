@@ -173,7 +173,7 @@ class ProjectManager {
         // Bouton Précédent
         paginationHTML += `
             <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="ProjectManager.changePage(${this.currentPage - 1})">
+                <a class="page-link" href="#" onclick="return window.ProjectManager.changePage(${this.currentPage - 1})">
                     <i class="fas fa-chevron-left"></i>
                 </a>
             </li>
@@ -532,8 +532,12 @@ class ProjectManager {
 
             // 3. Afficher les détails
             this.displayProjectDetails(project, projectTasks);
-            
-        } catch (error) {
+
+            //4.Activer les filtres de tâches
+            TaskManager.currentProjectId = projectId;
+            TaskManager.currentProjectTasks = projectTasks;
+            TaskManager.applyFiltersOnProjectTasks();
+                    } catch (error) {
             console.error("Erreur chargement détails:", error);
             this.showToast("Erreur", "Impossible de charger les détails", "error");
         }

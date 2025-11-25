@@ -276,6 +276,60 @@ public function getById($task_id, $user_id) {
 }
 
 
+//Requête dynamique avec filtres avancés
+
+public function getTasksByFilters($project_id, $status = null, $priorities = [], $search = '') {
+    try {
+        $query = "SELECT t.* 
+                  FROM " . $this->table_name . " t
+                  WHERE t.project_id = :project_id
+                  AND t.is_active = TRUE";
+
+        $params = [':project_id' => $project_id];
+
+        // Filtre status
+        if ($status !== null && $status !== 'all') {
+            $query .= " AND t.status = :status";
+            $params[':status'] = $status;
+        }
+
+        // Filtre priorités
+        if (!empty($priorities)) {
+            $in = [];
+            foreach ($priorities as $i => $p) {
+                $key = ":p$i";
+                $in[] = $key;
+                $params[$key] = $p;
+            }
+            $query .= " AND t.priority IN (" . implode(',', $in) . ")";
+        }
+   
+        // Filtre recherche
+        if (!empty($search)) {
+            $query .= " AND t.title LIKE :search";
+            $params[':search'] = "%$search%";
+        }
+
+        // Tri optionnel
+        $query .= " ORDER BY t.id DESC";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Bind de tous les paramètres
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération tâches filtrées: " . $e->getMessage());
+    }
+}
+
+
 
     // 🆔 GÉNÉRER UUID
     private function generateUUID()
@@ -286,8 +340,14 @@ public function getById($task_id, $user_id) {
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
+
+
+
     public function __destruct()
     {
         $this->conn = null;
     }
+
+
+
 }

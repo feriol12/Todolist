@@ -22,6 +22,9 @@ class ProjectManager {
 
         // ✅ CHARGEMENT INITIAL
         this.loadProjects();
+        this.loadArchivesTable();
+        // this.updateArchivesCount();
+        
         
         console.log('✅ ProjectManager initialisé');
     }
@@ -446,6 +449,9 @@ static showContentAfterLoading() {
                 this.showToast("Succès", "Projet supprimé avec succès", "success");
                 this.loadProjects();
                 this.loadProjectsTable();
+                this.loadArchivesTable();
+
+
                 
                 if (window.StatsManager) {
                     StatsManager.refreshStats();
@@ -860,7 +866,6 @@ static async openArchivesModal() {
         this.showToast("Erreur", "Impossible d'ouvrir les archives", "error");
     }
 }
-
 static async loadArchivesTable() {
     try {
         const response = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=list_archived`);
@@ -946,6 +951,7 @@ static renderArchivesTable(projects) {
     `).join('');
 }
 
+// Conte le nombre de projets archivé 
 static updateArchivesCount(count) {
     const badge = document.getElementById('archives-count');
     if (badge) {

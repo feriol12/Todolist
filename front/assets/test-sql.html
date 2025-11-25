@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test SQL Rappels</title>
+    <style>
+        table { border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .passe { background: green; color: white; }
+        .futur { background: red; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Test des Rappels SQL</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testSQL() {
+            try {
+                const response = await fetch('http://localhost/todolist/back/api/taskApi.php?action=getDueReminders');
+                const data = await response.json();
+                
+                let html = '<h2>Résultat API</h2>';
+                html += '<p>Heure navigateur: ' + new Date().toLocaleString('fr-FR') + '</p>';
+                
+                if (data.success) {
+                    html += '<table>';
+                    html += '<tr><th>Titre</th><th>Rappel</th><th>Est passé?</th></tr>';
+                    
+                    data.data.forEach(task => {
+                        const reminderDate = new Date(task.reminder);
+                        const now = new Date();
+                        const isPast = reminderDate <= now;
+                        const rowClass = isPast ? 'passe' : 'futur';
+                        
+                        html += `<tr class="${rowClass}">`;
+                        html += `<td>${task.title}</td>`;
+                        html += `<td>${task.reminder}</td>`;
+                        html += `<td>${isPast ? 'OUI' : 'NON'} (${reminderDate <= now})</td>`;
+                        html += `</tr>`;
+                    });
+                    
+                    html += '</table>';
+                } else {
+                    html += '<p>Erreur: ' + (data.error || 'Inconnue') + '</p>';
+                }
+                
+                document.getElementById('result').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<p>Erreur: ' + error.message + '</p>';
+            }
+        }
+        
+        // Lancer le test au chargement
+        testSQL();
+    </script>
+</body>
+</html>

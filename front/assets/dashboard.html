@@ -59,6 +59,22 @@
 
           <!-- Section utilisateur -->
           <div class="navbar-nav ms-auto">
+            <!-- 👇 BOUTON NOTIFICATION AJOUTÉ ICI -->
+            <button
+              id="notificationBell"
+              class="btn btn-outline-light btn-sm position-relative me-2"
+              style="display: none"
+            >
+              <i class="fas fa-bell"></i>
+              <span
+                id="notificationCount"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="display: none"
+              >
+                0
+              </span>
+            </button>
+
             <!-- État non connecté -->
             <div
               id="auth-buttons"
@@ -74,8 +90,8 @@
                 <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
               </button>
               <!-- <a href="../../index.html" class="btn btn-primary btn-sm">
-                <i class="fas fa-user-plus me-1"></i>Inscription
-              </a> -->
+            <i class="fas fa-user-plus me-1"></i>Inscription
+          </a> -->
             </div>
 
             <!-- État connecté -->
@@ -299,13 +315,13 @@
           </div>
 
           <!-- État vide (caché au départ) -->
-          <div id="empty-state" class="text-center py-5" style="display: none;">
-              <!-- ... ton code état vide ... -->
+          <div id="empty-state" class="text-center py-5" style="display: none">
+            <!-- ... ton code état vide ... -->
           </div>
 
           <!-- Grille des tâches -->
           <!-- <div id="tasks-container" class="row" style="display: none"> -->
-            <!-- Les tâches seront injectées ici par JavaScript -->
+          <!-- Les tâches seront injectées ici par JavaScript -->
           <!-- </div> -->
 
           <!-- BOUTON ARCHIVES - AU-DESSUS DE LA RECHERCHE -->
@@ -727,12 +743,15 @@
 
                 <div class="col-md-6 mb-3">
                   <label for="taskDureEstimation" class="form-label"
-                    >Duré d'estimation</label
+                    >Duré d'estimation en minutes</label
                   >
                   <input
-                    type="datetime"
+                    type="number"
                     class="form-control"
                     id="taskDureEstimation"
+                    min="0"
+                    step="15"
+                    placeholder="120"
                   />
                 </div>
               </div>
@@ -829,6 +848,38 @@
       </div>
     </div>
 
+    <!-- Modal notification -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+              <i class="fas fa-bell me-2"></i>Mes Rappels
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="notificationsList">
+              <!-- Les rappels seront chargés ici -->
+            </div>
+            <div
+              id="emptyNotifications"
+              class="text-center py-5"
+              style="display: none"
+            >
+              <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">Aucun rappel</h5>
+              <p class="text-muted">Vous n'avez pas de rappel en cours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast pour notifications -->
     <div class="toast-container position-fixed top-0 end-0 p-3">
       <div id="liveToast" class="toast" role="alert">
@@ -855,5 +906,6 @@
     <script src="js/project.js"></script>
     <script src="js/navbar-manager.js"></script>
     <script src="js/stats-manager.js"></script>
+    <script src="js/notification-manager.js"></script>
   </body>
 </html>

@@ -118,32 +118,11 @@ class Task
 
     // 📋 RÉCUPÉRER LES RAPPELS ÉCHUS
 
-    public function getDueReminders($user_id)
-    {
-        try {
-            $query = "SELECT 
-                    t.id,
-                    t.user_id,
-                    t.project_id,
-                    t.uuid,
-                    t.title,
-                    t.description,
-                    t.status,
-                    t.priority,
-                    t.due_date,
-                    t.due_time,
-                    t.reminder,
-                    t.estimated_duration,
-                    t.actual_duration,
-                    t.sort_order,
-                    t.is_recurring,
-                    t.tags,
-                    t.completed_at,
-                    t.is_active,
-                    t.created_at,
-                    t.updated_at,
-                    p.name as project_name,
-                    p.color as project_color
+public function getDueReminders($user_id)
+{
+    try {
+        $query = "SELECT t.id, t.uuid, t.title, t.due_date, t.due_time, t.reminder, t.project_id, t.status,
+                  p.name as project_name
                   FROM tasks t
                   LEFT JOIN projects p ON t.project_id = p.id
                   WHERE t.user_id = :user_id
@@ -151,33 +130,30 @@ class Task
                   AND t.status != 'done'
                   AND t.is_active = 1";
 
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $user_id);
-            $stmt->execute();
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
 
-            $allReminders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $filteredReminders = [];
+        $allReminders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $filteredReminders = [];
 
-            $now = time();
+        $now = time();
 
-            foreach ($allReminders as $r) {
-                $ts = strtotime($r['reminder']);
-                if ($ts !== false && $ts >= $now - 1 && $ts <= $now + 1) {
-                    $filteredReminders[] = $r;
-                }
+        foreach ($allReminders as $r) {
+            $ts = strtotime($r['reminder']);
+            // Notification uniquement si on est dans la "seconde exacte" du reminder
+            if ($ts !== false && $ts === $now) {
+                $filteredReminders[] = $r;
             }
-
-            // 🟥 LOGS POUR CONFIRMER PRODUIT
-            error_log("=== DEBUG FILTRAGE ===");
-            error_log("ALL = " . count($allReminders));
-            error_log("FILTERED = " . count($filteredReminders));
-
-            // 🟩 Le SEUL return
-            return $filteredReminders;
-        } catch (PDOException $e) {
-            throw new Exception("Erreur récupération rappels: " . $e->getMessage());
         }
+
+        return $filteredReminders;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération rappels: " . $e->getMessage());
     }
+}
+
 
 
 

@@ -1,5 +1,7 @@
 // js/navbar-manager.js - EN ATTENTE = À FAIRE + EN COURS
 class NavbarManager {
+   static API_BASE_URL = window.location.origin + '/todolist/back/api/';
+
     static async init() {
         console.log('🚀 Initialisation navbar manager...');
         
@@ -12,7 +14,7 @@ class NavbarManager {
 
     static async loadTasksStats() {
         try {
-            const response = await fetch('/todolist/back/api/taskApi.php');
+            const response = await fetch( `${this.API_BASE_URL}taskApi.php?action=list`);
             const data = await response.json();
             
             if (data.success && data.data) {

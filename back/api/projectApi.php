@@ -52,6 +52,9 @@ try {
         case 'toggle_favorite':
             handleToggleFavorite();
             break;
+        case 'filter':
+             handleTaskFilter();
+            break;
 
         default:
             http_response_code(400);
@@ -144,9 +147,10 @@ function handleProjectCreate()
     }
 }
 
-function handleProjectList() {
+function handleProjectList()
+{
     session_start();
-    
+
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
@@ -158,12 +162,11 @@ function handleProjectList() {
 
     try {
         $projects = $project->getUserProjects($_SESSION['user_id'], $search_term);
-        
+
         echo json_encode([
             'success' => true,
             'projects' => $projects
         ]);
-        
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
@@ -390,4 +393,30 @@ function handleToggleFavorite()
             'error' => $e->getMessage()
         ]);
     }
+
+    //pour la gestion des filtres de taches
+    function handleTaskFilter() {
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Utilisateur non connecté']);
+        return;
+    }
+
+    $input = json_decode(file_get_contents("php://input"), true);
+    $project_id = $input['project_id'] ?? 0;
+    $status = $input['status'] ?? null;
+    $priorities = $input['priority'] ?? [];
+    $search = $input['search'] ?? '';
+
+    $task = new Task();
+
+    try {
+        $tasks = $task->getTasksByFilters($project_id, $status, $priorities, $search);
+        echo json_encode(['success' => true, 'tasks' => $tasks]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+}
+
 }

@@ -248,7 +248,7 @@ static showContentAfterLoading() {
         // Bouton Précédent
         paginationHTML += `
             <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="ProjectManager.changePage(${this.currentPage - 1})">
+                <a class="page-link" href="#" onclick="return window.ProjectManager.changePage(${this.currentPage - 1})">
                     <i class="fas fa-chevron-left"></i>
                 </a>
             </li>
@@ -610,8 +610,12 @@ static showContentAfterLoading() {
 
             // 3. Afficher les détails
             this.displayProjectDetails(project, projectTasks);
-            
-        } catch (error) {
+
+            //4.Activer les filtres de tâches
+            TaskManager.currentProjectId = projectId;
+            TaskManager.currentProjectTasks = projectTasks;
+            TaskManager.applyFiltersOnProjectTasks();
+                    } catch (error) {
             console.error("Erreur chargement détails:", error);
             this.showToast("Erreur", "Impossible de charger les détails", "error");
         }
@@ -637,47 +641,71 @@ static showContentAfterLoading() {
         document.getElementById('project-details-stats').textContent = 
             `${completedTasks} sur ${totalTasks} tâches terminées`;
 
-         // C. Afficher le tableau des tâches
-        const tasksBody = document.getElementById('project-tasks-table-body');
-        
-        if (tasks.length === 0) {
-            tasksBody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-3">
-                        <i class="fas fa-tasks fa-2x mb-2"></i>
-                        <p>Aucune tâche dans ce projet</p>
-                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
-                            <i class="fas fa-plus me-1"></i>Créer une tâche
+    // C. Afficher le tableau des tâches
+    const tasksBody = document.getElementById('project-tasks-table-body');
+    
+    if (tasks.length === 0) {
+        tasksBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                    <i class="fas fa-tasks fa-2x mb-2"></i>
+                    <p>Aucune tâche dans ce projet</p>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="fas fa-plus me-1"></i>Créer une tâche
+                    </button>
+                </td>
+            </tr>
+        `;
+    } else {
+        tasksBody.innerHTML = tasks.map(task => `
+            <tr>
+                <td>
+                    <strong>${this.escapeHtml(task.title)}</strong>
+                </td>
+                <td>
+                    <small class="text-muted">${this.escapeHtml(task.description || 'Aucune description')}</small>
+                </td>
+                <td>
+                    <span class="badge bg-${this.getStatusBadgeColor(task.status)}">
+                        ${this.getStatusText(task.status)}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${this.getPriorityBadgeColor(task.priority)}">
+                        ${this.getPriorityText(task.priority)}
+                    </span>
+                </td>
+                <td>
+                    ${task.due_date ? this.formatDate(task.due_date) : 'Non définie'}
+                    ${task.due_time ? `<br><small class="text-muted">${task.due_time}</small>` : ''}
+                </td>
+                <td class="task-actions">
+                    <div class="btn-group btn-group-sm">
+                       
+                        
+                        <button class="btn btn-outline-primary" onclick="TaskManager.editTask(${task.id})" 
+                                title="Modifier la tâche">
+                            <i class="fas fa-edit"></i>
                         </button>
-                    </td>
-                </tr>
-            `;
-        } else {
-            tasksBody.innerHTML = tasks.map(task => `
-                <tr>
-                    <td>
-                        <strong>${this.escapeHtml(task.title)}</strong>
-                    </td>
-                    <td>
-                        <small class="text-muted">${this.escapeHtml(task.description || 'Aucune description')}</small>
-                    </td>
-                    <td>
-                        <span class="badge bg-${this.getStatusBadgeColor(task.status)}">
-                            ${this.getStatusText(task.status)}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge bg-${this.getPriorityBadgeColor(task.priority)}">
-                            ${this.getPriorityText(task.priority)}
-                        </span>
-                    </td>
-                    <td>
-                        ${task.due_date ? this.formatDate(task.due_date) : 'Non définie'}
-                        ${task.due_time ? `<br><small class="text-muted">${task.due_time}</small>` : ''}
-                    </td>
-                </tr>
-            `).join('');
-        }
+                        
+                        <button class="btn btn-outline-warning" onclick="TaskManager.toggleFavorite(${task.id})" 
+                                title="${task.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                            <i class="fas ${task.is_favorite ? 'fa-star' : 'fa-star'}"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-danger" onclick="TaskManager.deleteTask(${task.id},this)" 
+                                title="Supprimer la tâche">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+
+   
+
 
          // D. Afficher la section détails
         document.getElementById('project-details-section').style.display = 'block';
@@ -715,10 +743,38 @@ static showContentAfterLoading() {
         return colorMap[priority] || 'secondary';
     }
 
-    static formatDate(dateString) {
-        if (!dateString) return 'Non définie';
-        return new Date(dateString).toLocaleDateString('fr-FR');
+static formatDate(dateString) {
+    if (!dateString) return 'Non définie';
+    return new Date(dateString).toLocaleDateString('fr-FR');
+}
+
+   
+
+    static showToast(title, message, type = "info") {
+        const toastElement = document.getElementById("liveToast");
+        if (!toastElement) {
+            console.error("Toast element non trouvé");
+            return;
+        }
+        
+        const toast = new bootstrap.Toast(toastElement);
+        document.getElementById("toastTitle").textContent = title;
+        document.getElementById("toastMessage").textContent = message;
+
+        const toastHeader = document.querySelector("#liveToast .toast-header");
+        if (toastHeader) {
+            toastHeader.className = "toast-header";
+            if (type === "success") toastHeader.classList.add("text-bg-success");
+            if (type === "error") toastHeader.classList.add("text-bg-danger");
+        }
+
+        toast.show();
     }
+
+
+    // 🔧 AJOUTER ces méthodes dans la classe ProjectManager
+
+static currentEditProjectId = null; // Stocker l'ID du projet en cours d'édition
 
     static async editProject(projectId) {
         console.log('✏️ Édition du projet:', projectId);

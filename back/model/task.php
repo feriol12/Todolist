@@ -115,8 +115,220 @@ class Task
         }
     }
 
+    // 🗑️ SUPPRESSION LOGIQUE D'UNE TÂCHE
+    public function softDelete($task_id, $user_id)
+    {
+        try {
+            $query = "UPDATE " . $this->table_name . " 
+                 SET is_active = FALSE
+                 WHERE id = :task_id 
+                 AND user_id = :user_id 
+                 AND is_active = TRUE";
 
-    // 📋 RÉCUPÉRER LES RAPPELS ÉCHUS
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":task_id", $task_id);
+            $stmt->bindParam(":user_id", $user_id);
+
+            if ($stmt->execute()) {
+                return $stmt->rowCount() > 0; // Retourne true si une ligne a été modifiée
+            }
+
+            return false;
+        } catch (PDOException $e) {
+            throw new Exception("Erreur suppression tâche: " . $e->getMessage());
+        }
+    }
+
+// 🔄 RESTAURER UNE TÂCHE SUPPRIMÉE
+public function restore($task_id, $user_id) {
+    try {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET is_active = TRUE, 
+                     deleted_at = NULL 
+                 WHERE id = :task_id 
+                 AND user_id = :user_id 
+                 AND is_active = FALSE";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":task_id", $task_id);
+        $stmt->bindParam(":user_id", $user_id);
+
+        return $stmt->execute() && $stmt->rowCount() > 0;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur restauration tâche: " . $e->getMessage());
+    }
+}
+
+// 🗂️ RÉCUPÉRER LES TÂCHES SUPPRIMÉES (corbeille)
+public function getDeletedTasks($user_id) {
+    try {
+        $query = "SELECT t.*, p.name as project_name 
+                  FROM " . $this->table_name . " t
+                  LEFT JOIN projects p ON t.project_id = p.id
+                  WHERE t.user_id = :user_id 
+                  AND t.is_active = FALSE
+                  ORDER BY t.deleted_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération tâches supprimées: " . $e->getMessage());
+    }
+}
+
+// ✏️ MODIFIER UNE TÂCHE
+public function update($task_id, $user_id) {
+    try {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET project_id = :project_id,
+                     title = :title,
+                     description = :description,
+                     status = :status,
+                     priority = :priority,
+                     due_date = :due_date,
+                     due_time = :due_time,
+                     reminder = :reminder,
+                     estimated_duration = :estimated_duration,
+                     tags = :tags,
+                     is_recurring = :is_recurring,
+                     updated_at = NOW()
+                 WHERE id = :task_id 
+                 AND user_id = :user_id 
+                 AND is_active = TRUE";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Nettoyer et binder les données
+        $stmt->bindParam(":project_id", $this->project_id);
+        $stmt->bindParam(":title", htmlspecialchars(strip_tags($this->title)));
+        $stmt->bindParam(":description", htmlspecialchars(strip_tags($this->description)));
+        $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":priority", $this->priority);
+        $stmt->bindParam(":due_date", $this->due_date);
+        $stmt->bindParam(":due_time", $this->due_time);
+        $stmt->bindParam(":reminder", $this->reminder);
+        $stmt->bindParam(":estimated_duration", $this->estimated_duration);
+        $stmt->bindParam(":tags", $this->tags);
+        $stmt->bindParam(":is_recurring", $this->is_recurring);
+        $stmt->bindParam(":task_id", $task_id);
+        $stmt->bindParam(":user_id", $user_id);
+
+        if ($stmt->execute()) {
+            return $stmt->rowCount() > 0;
+        }
+
+        return false;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur modification tâche: " . $e->getMessage());
+    }
+}
+// ⭐ BASculer FAVORI
+public function toggleFavorite($task_id, $user_id) {
+    try {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET is_favorite = NOT is_favorite 
+                 WHERE id = :task_id 
+                 AND user_id = :user_id 
+                 AND is_active = TRUE";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":task_id", $task_id);
+        $stmt->bindParam(":user_id", $user_id);
+
+        if ($stmt->execute()) {
+            return $stmt->rowCount() > 0;
+        }
+
+        return false;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur mise à jour favori: " . $e->getMessage());
+    }
+}
+
+
+// 👁️ RÉCUPÉRER UNE TÂCHE PAR ID
+public function getById($task_id, $user_id) {
+    try {
+        $query = "SELECT t.*, p.name as project_name, p.color as project_color 
+                  FROM " . $this->table_name . " t
+                  LEFT JOIN projects p ON t.project_id = p.id
+                  WHERE t.id = :task_id 
+                  AND t.user_id = :user_id 
+                  AND t.is_active = TRUE";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":task_id", $task_id);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération tâche: " . $e->getMessage());
+    }
+}
+
+
+//Requête dynamique avec filtres avancés
+
+public function getTasksByFilters($project_id, $status = null, $priorities = [], $search = '') {
+    try {
+        $query = "SELECT t.* 
+                  FROM " . $this->table_name . " t
+                  WHERE t.project_id = :project_id
+                  AND t.is_active = TRUE";
+
+        $params = [':project_id' => $project_id];
+
+        // Filtre status
+        if ($status !== null && $status !== 'all') {
+            $query .= " AND t.status = :status";
+            $params[':status'] = $status;
+        }
+
+        // Filtre priorités
+        if (!empty($priorities)) {
+            $in = [];
+            foreach ($priorities as $i => $p) {
+                $key = ":p$i";
+                $in[] = $key;
+                $params[$key] = $p;
+            }
+            $query .= " AND t.priority IN (" . implode(',', $in) . ")";
+        }
+   
+        // Filtre recherche
+        if (!empty($search)) {
+            $query .= " AND t.title LIKE :search";
+            $params[':search'] = "%$search%";
+        }
+
+        // Tri optionnel
+        $query .= " ORDER BY t.id DESC";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Bind de tous les paramètres
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération tâches filtrées: " . $e->getMessage());
+    }
+}
+// 📋 RÉCUPÉRER LES RAPPELS ÉCHUS
 
 public function getDueReminders($user_id)
 {
@@ -155,11 +367,6 @@ public function getDueReminders($user_id)
 }
 
 
-
-
-
-
-
     // 🆔 GÉNÉRER UUID
     private function generateUUID()
     {
@@ -169,8 +376,14 @@ public function getDueReminders($user_id)
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
+
+
+
     public function __destruct()
     {
         $this->conn = null;
     }
+
+
+
 }

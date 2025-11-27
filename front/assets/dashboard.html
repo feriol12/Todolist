@@ -17,15 +17,14 @@
   <link rel="stylesheet" href="css/detailTache.css" />
 </head>
 
-<body>
-
-  <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-      <a class="navbar-brand" href="#">
-        <i class="fas fa-tasks me-2"></i>
-        TaskMaster
-      </a>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-tasks me-2"></i>
+          TaskMaster
+        </a>
 
       <!-- Bouton toggle pour mobile -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
@@ -48,23 +47,42 @@
           </div>
         </div>
 
-        <!-- Section utilisateur -->
-        <div class="navbar-nav ms-auto">
-          <!-- État non connecté -->
-          <div id="auth-buttons" class="auth-buttons d-flex align-items-center">
-            <!-- 👇 INSÈRE ICI le user-welcome -->
-            <span class="user-welcome me-3">
-              <i class="fas fa-user me-1"></i>
-              <span id="user-name">John Doe</span>
-            </span>
-            <!-- ✅ BON - pour des actions dans la page -->
-            <button class="btn btn-outline-light btn-sm" id="logout-btn">
-              <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+          <!-- Section utilisateur -->
+          <div class="navbar-nav ms-auto">
+            <!-- 👇 BOUTON NOTIFICATION AJOUTÉ ICI -->
+            <button
+              id="notificationBell"
+              class="btn btn-outline-light btn-sm position-relative me-2"
+              style="display: none"
+            >
+              <i class="fas fa-bell"></i>
+              <span
+                id="notificationCount"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="display: none"
+              >
+                0
+              </span>
             </button>
-            <!-- <a href="../../index.html" class="btn btn-primary btn-sm">
-                <i class="fas fa-user-plus me-1"></i>Inscription
-              </a> -->
-          </div>
+
+            <!-- État non connecté -->
+            <div
+              id="auth-buttons"
+              class="auth-buttons d-flex align-items-center"
+            >
+              <!-- 👇 INSÈRE ICI le user-welcome -->
+              <span class="user-welcome me-3">
+                <i class="fas fa-user me-1"></i>
+                <span id="user-name">John Doe</span>
+              </span>
+              <!-- ✅ BON - pour des actions dans la page -->
+              <button class="btn btn-outline-light btn-sm" id="logout-btn">
+                <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+              </button>
+              <!-- <a href="../../index.html" class="btn btn-primary btn-sm">
+            <i class="fas fa-user-plus me-1"></i>Inscription
+          </a> -->
+            </div>
 
           <!-- État connecté -->
           <div id="user-menu" class="auth-buttons d-flex align-items-center" style="display: none !important">
@@ -224,18 +242,23 @@
             </div>
           </div> -->
 
-        <!-- Loading -->
-        <div id="loading" class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Chargement...</span>
+          <!-- Loading -->
+          <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Chargement des projets...</p>
           </div>
-          <p class="mt-2">Chargement des projets...</p>
-        </div>
 
-        <!-- Grille des tâches -->
-        <!-- <div id="tasks-container" class="row" style="display: none"> -->
-        <!-- Les tâches seront injectées ici par JavaScript -->
-        <!-- </div> -->
+          <!-- État vide (caché au départ) -->
+          <div id="empty-state" class="text-center py-5" style="display: none">
+            <!-- ... ton code état vide ... -->
+          </div>
+
+          <!-- Grille des tâches -->
+          <!-- <div id="tasks-container" class="row" style="display: none"> -->
+          <!-- Les tâches seront injectées ici par JavaScript -->
+          <!-- </div> -->
 
         <!-- BOUTON ARCHIVES - AU-DESSUS DE LA RECHERCHE -->
         <div class="d-flex justify-content-end mb-2">
@@ -545,11 +568,20 @@
                 </div>
               </div>
 
-              <div class="col-md-6 mb-3">
-                <label for="taskDureEstimation" class="form-label">Duré d'estimation</label>
-                <input type="datetime" class="form-control" id="taskDureEstimation" />
+                <div class="col-md-6 mb-3">
+                  <label for="taskDureEstimation" class="form-label"
+                    >Duré d'estimation en minutes</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="taskDureEstimation"
+                    min="0"
+                    step="15"
+                    placeholder="120"
+                  />
+                </div>
               </div>
-            </div>
 
             <div class="mb-3">
               <label for="taskTags" class="form-label">
@@ -613,18 +645,54 @@
             </ul>
           </nav>
 
-          <!-- MESSAGE VIDE -->
-          <div id="archives-empty-state" class="text-center py-5" style="display: none">
-            <i class="fas fa-archive fa-3x text-muted mb-3"></i>
-            <h4 class="text-muted">Aucun projet archivé</h4>
-            <p class="text-muted">
-              Les projets que vous supprimez apparaîtront ici.
-            </p>
+            <!-- MESSAGE VIDE -->
+            <div
+              id="archives-empty-state"
+              class="text-center py-5"
+              style="display: none"
+            >
+              <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+              <h4 class="text-muted">Aucun projet archivé</h4>
+              <p class="text-muted">
+                Les projets que vous supprimez apparaîtront ici.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Modal notification -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+              <i class="fas fa-bell me-2"></i>Mes Rappels
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="notificationsList">
+              <!-- Les rappels seront chargés ici -->
+            </div>
+            <div
+              id="emptyNotifications"
+              class="text-center py-5"
+              style="display: none"
+            >
+              <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">Aucun rappel</h5>
+              <p class="text-muted">Vous n'avez pas de rappel en cours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   <!-- Toast pour notifications -->
   <div class="toast-container position-fixed top-0 end-0 p-3">
@@ -648,9 +716,9 @@
   <script src="js/task.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <script src="js/project.js"></script>
-  <script src="js/navbar-manager.js"></script>
-  <script src="js/stats-manager.js"></script>
-</body>
-
+    <script src="js/project.js"></script>
+    <script src="js/navbar-manager.js"></script>
+    <script src="js/stats-manager.js"></script>
+    <script src="js/notification-manager.js"></script>
+  </body>
 </html>

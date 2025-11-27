@@ -22,6 +22,9 @@ class ProjectManager {
 
         // ✅ CHARGEMENT INITIAL
         this.loadProjects();
+        this.loadArchivesTable();
+        // this.updateArchivesCount();
+        
         
         console.log('✅ ProjectManager initialisé');
     }
@@ -111,30 +114,102 @@ class ProjectManager {
         }
     }
 
-    static async loadProjectsTable() {
-        try {
-            const response = await fetch(`${this.API_BASE_URL}projectApi.php?action=list`);
+ static async loadProjectsTable() {
+    const loadingElement = document.getElementById('loading');
+    const projectsTable = document.getElementById('projects-table');
+    const emptyState = document.getElementById('empty-state');
+    
+    try {
+        // ✅ ÉTAPE 1: CACHER TOUT SAUF LE LOADING
+        this.hideAllElementsExceptLoading();
+        
+        // ✅ ÉTAPE 2: ATTENDRE 1s MINIMUM + API EN PARALLÈLE
+        const startTime = Date.now();
+        const apiPromise = fetch(`${this.API_BASE_URL}projectApi.php?action=list`);
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
+        
+          // Pour tester, tu peux simuler un délai API court :
+        const [apiResponse] = await Promise.all([
+            fetch(`${this.API_BASE_URL}projectApi.php?action=list`),
+            new Promise(resolve => setTimeout(resolve, 1000)) // ← Garantit 1s minimum
+        ]);
+        
+        // ✅ ÉTAPE 3: TRAITER LA RÉPONSE
+        if (!apiResponse.ok) throw new Error(`HTTP error! status: ${apiResponse.status}`);
+        
+        const data = await apiResponse.json();
+        if (!data.success) throw new Error(data.error || "Erreur API");
+        
+        this.allProjects = data.projects;
+        this.currentPage = 1;
+        this.currentItemsPerPage = this.getItemsPerPage();
+        this.renderPaginatedProjects();
+        this.updateSearchResultsCount(data.projects.length, '');
+        
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log("Projets pour tableau chargés:", data.projects);
-            
-            if (data.success) {
-                this.allProjects = data.projects;
-                this.currentPage = 1;
-                this.currentItemsPerPage = this.getItemsPerPage();
-                this.renderPaginatedProjects();
-                this.updateSearchResultsCount(data.projects.length, '');
-            } else {
-                console.error("Erreur API projets:", data.error);
-            }
-        } catch (error) {
-            console.error("Erreur chargement projets:", error);
-        }
+    } catch (error) {
+        console.error("Erreur chargement projets:", error);
+        this.showToast("Erreur", "Impossible de charger les projets", "error");
+        
+    } finally {
+        // ✅ ÉTAPE 4: TRANSITION VERS LE CONTENU
+        this.showContentAfterLoading();
     }
+}
+
+static hideAllElementsExceptLoading() {
+    const loadingElement = document.getElementById('loading');
+    const projectsTable = document.getElementById('projects-table');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (loadingElement) loadingElement.style.display = 'block';
+    if (projectsTable) projectsTable.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+}
+
+static showContentAfterLoading() {
+    const loadingElement = document.getElementById('loading');
+    const projectsTable = document.getElementById('projects-table');
+    const emptyState = document.getElementById('empty-state');
+    
+    // Petit délai pour une transition plus smooth
+    setTimeout(() => {
+        if (loadingElement) loadingElement.style.display = 'none';
+        
+        if (this.allProjects.length > 0) {
+            if (projectsTable) projectsTable.style.display = 'block';
+        } else {
+            if (emptyState) emptyState.style.display = 'block';
+        }
+    }, 200);
+}
+
+static hideAllElementsExceptLoading() {
+    const loadingElement = document.getElementById('loading');
+    const projectsTable = document.getElementById('projects-table');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (loadingElement) loadingElement.style.display = 'block';
+    if (projectsTable) projectsTable.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+}
+
+static showContentAfterLoading() {
+    const loadingElement = document.getElementById('loading');
+    const projectsTable = document.getElementById('projects-table');
+    const emptyState = document.getElementById('empty-state');
+    
+    // Petit délai pour une transition plus smooth
+    setTimeout(() => {
+        if (loadingElement) loadingElement.style.display = 'none';
+        
+        if (this.allProjects.length > 0) {
+            if (projectsTable) projectsTable.style.display = 'block';
+        } else {
+            if (emptyState) emptyState.style.display = 'block';
+        }
+    }, 200);
+}
 
     static renderPaginatedProjects() {
         const itemsPerPage = this.getItemsPerPage();
@@ -374,6 +449,9 @@ class ProjectManager {
                 this.showToast("Succès", "Projet supprimé avec succès", "success");
                 this.loadProjects();
                 this.loadProjectsTable();
+                this.loadArchivesTable();
+
+
                 
                 if (window.StatsManager) {
                     StatsManager.refreshStats();
@@ -844,7 +922,6 @@ static async openArchivesModal() {
         this.showToast("Erreur", "Impossible d'ouvrir les archives", "error");
     }
 }
-
 static async loadArchivesTable() {
     try {
         const response = await fetch(`${this.API_BASE_URL}projectArchivesApi.php?action=list_archived`);
@@ -930,6 +1007,7 @@ static renderArchivesTable(projects) {
     `).join('');
 }
 
+// Conte le nombre de projets archivé 
 static updateArchivesCount(count) {
     const badge = document.getElementById('archives-count');
     if (badge) {

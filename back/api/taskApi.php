@@ -39,7 +39,10 @@ try {
     $task = new Task();
 
     switch ($action) {
-        case 'list':
+        case 'getDueReminders':
+            handleGetDueReminders($task, $user_id);
+            break;
+            case 'list':
             handleGetTasks($task, $user_id);
             break;
             
@@ -59,11 +62,21 @@ try {
         case 'update':
             handleUpdateTask($task, $user_id);
             break;
+          default:
+          if($method == 'GET'){
+              handleGetTasks($task, $user_id);
+              break;
 
-            
-        default:
-            http_response_code(405);
-            echo json_encode(['success' => false, 'error' => 'Méthode non autorisée']);
+          } elseif($method == 'POST'){
+                   handleCreateTask($task, $user_id);
+                   break;
+
+          } else{
+
+              http_response_code(405);
+              echo json_encode(['success' => false, 'error' => 'Méthode non autorisée']);
+          }
+       
     }
 
 } catch (Exception $e) {
@@ -71,7 +84,9 @@ try {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 
-function handleGetTasks($task, $user_id) {
+
+function handleGetTasks($task, $user_id)
+{
     $filters = [
         'status' => $_GET['status'] ?? 'all',
         'project_id' => $_GET['project_id'] ?? null,
@@ -85,7 +100,7 @@ function handleGetTasks($task, $user_id) {
     }
 
     $tasks = $task->getByUser($user_id, $filters);
-    
+
     echo json_encode([
         'success' => true,
         'data' => $tasks,
@@ -93,7 +108,32 @@ function handleGetTasks($task, $user_id) {
     ]);
 }
 
-function handleCreateTask($task, $user_id) {
+function calculateReminder($dueDate, $dueTime, $reminderType)
+{
+    if (empty($dueDate) || empty($reminderType) || $reminderType === 'custom') {
+        return null;
+    }
+
+    try {
+        // Créer l'objet DateTime pour l'échéance
+        $dueDateTime = new DateTime($dueDate . ($dueTime ? ' ' . $dueTime : ' 00:00:00'));
+
+        // Convertir le type de rappel en minutes
+        $minutesToSubtract = intval($reminderType);
+
+        // Soustraire les minutes
+        $dueDateTime->sub(new DateInterval('PT' . $minutesToSubtract . 'M'));
+
+        // Retourner au format MySQL
+        return $dueDateTime->format('Y-m-d H:i:s');
+    } catch (Exception $e) {
+        error_log("Erreur calcul rappel: " . $e->getMessage());
+        return null;
+    }
+}
+
+function handleCreateTask($task, $user_id)
+{
     $input = json_decode(file_get_contents("php://input"), true);
 
     // Validation des données requises
@@ -112,7 +152,12 @@ function handleCreateTask($task, $user_id) {
     $task->priority = $input['priority'] ?? 'medium';
     $task->due_date = $input['due_date'] ?? null;
     $task->due_time = $input['due_time'] ?? null;
-    $task->reminder = $input['reminder'] ?? null;
+    // Calculer le rappel automatiquement
+    $task->reminder = calculateReminder(
+        $input['due_date'] ?? null,
+        $input['due_time'] ?? null,
+        $input['reminder'] ?? null
+    );
     $task->estimated_duration = $input['estimated_duration'] ?? null;
     $task->is_recurring = $input['is_recurring'] ?? false;
 
@@ -278,4 +323,35 @@ function handleUpdateTask($task, $user_id) {
     }
 }
 
-?>
+
+
+
+
+function handleGetDueReminders($task, $user_id) {
+    try {
+        $reminders = $task->getDueReminders($user_id);
+        
+        // ⚠️ DEBUG ULTIME
+        error_log("=== DEBUG API ===");
+        error_log("User ID: " . $user_id);
+        error_log("Heure serveur: " . date('Y-m-d H:i:s'));
+        error_log("Rappels bruts: " . print_r($reminders, true));
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $reminders,
+            'count' => count($reminders),
+            'debug' => [ // ⚠️ Info de debug
+                'server_time' => date('Y-m-d H:i:s'),
+                'query_range' => [
+                    'start' => date('Y-m-d H:i:s', strtotime('-1 minute')),
+                    'end' => date('Y-m-d H:i:s')
+                ]
+            ]
+        ]);
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+}

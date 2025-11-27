@@ -328,7 +328,43 @@ public function getTasksByFilters($project_id, $status = null, $priorities = [],
         throw new Exception("Erreur récupération tâches filtrées: " . $e->getMessage());
     }
 }
+// 📋 RÉCUPÉRER LES RAPPELS ÉCHUS
 
+public function getDueReminders($user_id)
+{
+    try {
+        $query = "SELECT t.id, t.uuid, t.title, t.due_date, t.due_time, t.reminder, t.project_id, t.status,
+                  p.name as project_name
+                  FROM tasks t
+                  LEFT JOIN projects p ON t.project_id = p.id
+                  WHERE t.user_id = :user_id
+                  AND t.reminder IS NOT NULL
+                  AND t.status != 'done'
+                  AND t.is_active = 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        $allReminders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $filteredReminders = [];
+
+        $now = time();
+
+        foreach ($allReminders as $r) {
+            $ts = strtotime($r['reminder']);
+            // Notification uniquement si on est dans la "seconde exacte" du reminder
+            if ($ts !== false && $ts === $now) {
+                $filteredReminders[] = $r;
+            }
+        }
+
+        return $filteredReminders;
+
+    } catch (PDOException $e) {
+        throw new Exception("Erreur récupération rappels: " . $e->getMessage());
+    }
+}
 
 
     // 🆔 GÉNÉRER UUID
